@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import type { WordItem } from "../data/types";
+import { computeMinTimeMs } from "../data/timing";
 
 export default function Feedback({
   item,
@@ -11,6 +13,31 @@ export default function Feedback({
   onNext: () => void;
   isLast: boolean;
 }) {
+  // Gate the Next button behind a read-time minimum scaled to the
+  // definition + example — otherwise students tap through without ever
+  // reading the meaning they just got wrong (or right).
+  const minTimeMs = useMemo(
+    () => computeMinTimeMs(`${item.definitionEn} ${item.example}`),
+    [item.definitionEn, item.example],
+  );
+  const [remainingMs, setRemainingMs] = useState(minTimeMs);
+
+  useEffect(() => {
+    setRemainingMs(minTimeMs);
+    const start = Date.now();
+    const id = setInterval(() => {
+      const left = minTimeMs - (Date.now() - start);
+      setRemainingMs(left > 0 ? left : 0);
+      if (left <= 0) clearInterval(id);
+    }, 100);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id, minTimeMs]);
+
+  const ready = remainingMs <= 0;
+  const secondsLeft = Math.ceil(remainingMs / 1000);
+  const label = isLast ? "Finish" : "Next Question";
+
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4">
       <div
@@ -36,9 +63,14 @@ export default function Feedback({
 
       <button
         onClick={onNext}
-        className="mt-2 rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"
+        disabled={!ready}
+        className={`mt-2 rounded-xl font-medium py-3 transition ${
+          ready
+            ? "bg-[#14274d] text-white hover:opacity-90"
+            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+        }`}
       >
-        {isLast ? "Finish" : "Next Question"}
+        {ready ? label : `${label} (${secondsLeft}s)`}
       </button>
     </div>
   );

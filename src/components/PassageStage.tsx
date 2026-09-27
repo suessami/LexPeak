@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { buildCloze } from "../data/cloze";
 import { shuffle } from "../data/course";
+import { computeMinTimeMs } from "../data/timing";
+import TooFastModal from "./TooFastModal";
 
 const MAX_ATTEMPTS = 2;
 
@@ -62,10 +64,22 @@ export default function PassageStage({
   const [locked, setLocked] = useState(false);
   const [firstTryCorrect, setFirstTryCorrect] = useState<Set<string>>(new Set());
   const [forcedIds, setForcedIds] = useState<Set<string>>(new Set());
+  const [tooFast, setTooFast] = useState(false);
+  const startRef = useRef(Date.now());
 
   const usedTileIds = new Set(Object.values(filled).filter(Boolean) as string[]);
   const bankTiles = tiles.filter((t) => !usedTileIds.has(t.id));
   const allFilled = blanks.every((b) => filled[b.id]);
+
+  const activeBlankData = blanks.find((b) => b.id === activeBlank);
+  const minTimeMs = useMemo(
+    () => computeMinTimeMs(`${activeBlankData?.before ?? ""} ${activeBlankData?.after ?? ""}`),
+    [activeBlankData],
+  );
+
+  useEffect(() => {
+    startRef.current = Date.now();
+  }, [activeBlank]);
 
   function selectBlank(blankId: string) {
     if (locked || forcedIds.has(blankId)) return;
@@ -93,6 +107,11 @@ export default function PassageStage({
   function tapTile(tile: Tile) {
     if (!activeBlank || locked) return;
     const blank = blanks.find((b) => b.id === activeBlank)!;
+
+    if (Date.now() - startRef.current < minTimeMs) {
+      setTooFast(true);
+      return;
+    }
 
     if (tile.id === blank.correctTileId) {
       const wasFirstTry = attemptCount === 0;
@@ -127,7 +146,11 @@ export default function PassageStage({
       } else {
         setAttemptCount(nextAttempts);
         setWrongTileId(tile.id);
-        setTimeout(() => setWrongTileId((id) => (id === tile.id ? null : id)), 400);
+        setLocked(true);
+        setTimeout(() => {
+          setWrongTileId(null);
+          setLocked(false);
+        }, 600);
       }
     }
   }
@@ -199,6 +222,14 @@ export default function PassageStage({
           ))}
         </div>
       </div>
+
+      <TooFastModal
+        open={tooFast}
+        onClose={() => {
+          setTooFast(false);
+          startRef.current = Date.now();
+        }}
+      />
     </div>
   );
 }

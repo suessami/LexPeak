@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { pickDistractors, shuffle } from "../data/course";
+import { computeMinTimeMs } from "../data/timing";
 import TooFastModal from "./TooFastModal";
-
-const MIN_TIME_MS = 1000;
 
 /**
  * Stage 3 — reverse-direction recall: show the word, pick its correct
@@ -35,6 +34,18 @@ export default function DefinitionQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answer.id]);
 
+  // Scale the read-time gate to the longest option, not a flat constant —
+  // otherwise a student who's seen a word many times can just glance at the
+  // first word of each option and tap without ever reading the rest.
+  const minTimeMs = useMemo(() => {
+    const longest = options.reduce(
+      (max, opt) => Math.max(max, opt.definitionEn.length),
+      0,
+    );
+    return computeMinTimeMs("x".repeat(longest));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]);
+
   useEffect(() => {
     startRef.current = Date.now();
     setSelectedId(null);
@@ -44,15 +55,15 @@ export default function DefinitionQuestion({
   function choose(optId: string) {
     if (selectedId) return;
 
-    if (Date.now() - startRef.current < MIN_TIME_MS) {
+    if (Date.now() - startRef.current < minTimeMs) {
       setTooFast(true);
       return;
     }
 
     setSelectedId(optId);
-    const correct = optId === answer.id;
-    setTimeout(() => onAnswered(correct), 450);
   }
+
+  const isCorrect = selectedId === answer.id;
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
@@ -105,6 +116,15 @@ export default function DefinitionQuestion({
           );
         })}
       </div>
+
+      {selectedId && (
+        <button
+          onClick={() => onAnswered(isCorrect)}
+          className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"
+        >
+          Continue
+        </button>
+      )}
 
       <TooFastModal
         open={tooFast}

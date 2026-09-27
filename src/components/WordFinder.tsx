@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { shuffle } from "../data/course";
+import { computeMinTimeMs } from "../data/timing";
+import TooFastModal from "./TooFastModal";
 
 const MAX_ATTEMPTS = 2;
 const MAX_ROUNDS = 3;
@@ -10,11 +12,12 @@ const MAX_ROUNDS = 3;
  * shown at a time; the student taps the matching word out of a tile bank
  * that also holds a few decoys from recent units. Tap-only, no typing.
  *
- * A clue allows at most MAX_ATTEMPTS taps. Two wrong taps in a row means
- * the student is guessing without reading the clue, so that word drops
- * into the wrong pool: the correct tile is revealed, and the word comes
- * back for a fresh attempt in a later round (up to MAX_ROUNDS), the same
- * requeue idea used in the quiz stages.
+ * A clue allows at most MAX_ATTEMPTS taps, and taps are gated by a
+ * read-time minimum scaled to the clue's length (see data/timing) so a
+ * memorized-shape guess doesn't beat actually reading it. Two wrong taps
+ * in a row means the student is guessing without reading, so that word
+ * drops into the wrong pool: the correct tile is revealed, and the word
+ * comes back for a fresh attempt in a later round (up to MAX_ROUNDS).
  */
 export default function WordFinder({
   words,
@@ -41,9 +44,20 @@ export default function WordFinder({
   const [wrongId, setWrongId] = useState<string | null>(null);
   const [revealId, setRevealId] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
+  const [tooFast, setTooFast] = useState(false);
   const [finished, setFinished] = useState(false);
+  const startRef = useRef(Date.now());
 
   const currentClue = roundQueue[clueIndex];
+  const minTimeMs = useMemo(
+    () => computeMinTimeMs(currentClue?.definitionEn ?? ""),
+    [currentClue],
+  );
+
+  useEffect(() => {
+    startRef.current = Date.now();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClue?.id, roundNum]);
 
   function goToNext(nextFound: Set<string>, nextWrongs: WordItem[]) {
     const nextIndex = clueIndex + 1;
@@ -78,6 +92,11 @@ export default function WordFinder({
   function tap(tile: WordItem) {
     if (locked || !currentClue || foundIds.has(tile.id) || finished) return;
 
+    if (Date.now() - startRef.current < minTimeMs) {
+      setTooFast(true);
+      return;
+    }
+
     if (tile.id === currentClue.id) {
       const nextFound = new Set(foundIds);
       nextFound.add(tile.id);
@@ -86,8 +105,8 @@ export default function WordFinder({
       goToNext(nextFound, roundWrongs);
     } else {
       const nextAttempts = attemptCount + 1;
+      setLocked(true);
       if (nextAttempts >= MAX_ATTEMPTS) {
-        setLocked(true);
         setWrongId(null);
         setRevealId(currentClue.id);
         const nextWrongs = [...roundWrongs, currentClue];
@@ -95,16 +114,20 @@ export default function WordFinder({
         setTimeout(() => {
           setRevealId(null);
           goToNext(foundIds, nextWrongs);
-        }, 650);
+        }, 750);
       } else {
         setAttemptCount(nextAttempts);
         setWrongId(tile.id);
-        setTimeout(() => setWrongId((id) => (id === tile.id ? null : id)), 400);
+        setTimeout(() => {
+          setWrongId(null);
+          setLocked(false);
+        }, 600);
       }
     }
   }
 
   const roundLabel = roundNum > 1 ? `Round ${roundNum} · Retry missed words` : "Practice";
+  const triesLeft = MAX_ATTEMPTS - attemptCount;
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
@@ -117,13 +140,20 @@ export default function WordFinder({
         </span>
       </div>
 
-      <p className="text-slate-700 leading-relaxed min-h-[3.5rem]">
-        {finished || !currentClue
-          ? "Nice work!"
-          : revealId
-            ? "That one! Let's keep going."
-            : currentClue.definitionEn}
-      </p>
+      <div className="min-h-[3.5rem]">
+        <p className="text-slate-700 leading-relaxed">
+          {finished || !currentClue
+            ? "Nice work!"
+            : revealId
+              ? "Not quite — here's the word. Let's keep going."
+              : currentClue.definitionEn}
+        </p>
+        {!finished && currentClue && !revealId && (
+          <p className="text-xs text-slate-400 mt-1">
+            {triesLeft} {triesLeft === 1 ? "try" : "tries"} left
+          </p>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         {tiles.map((tile) => {
@@ -146,6 +176,14 @@ export default function WordFinder({
           );
         })}
       </div>
+
+      <TooFastModal
+        open={tooFast}
+        onClose={() => {
+          setTooFast(false);
+          startRef.current = Date.now();
+        }}
+      />
     </div>
   );
 }

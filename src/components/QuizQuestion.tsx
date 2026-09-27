@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { buildCloze } from "../data/cloze";
 import { pickDistractors, shuffle } from "../data/course";
+import { computeMinTimeMs } from "../data/timing";
 import TooFastModal from "./TooFastModal";
-
-const MIN_TIME_MS = 1000;
 
 export default function QuizQuestion({
   answer,
@@ -25,6 +24,10 @@ export default function QuizQuestion({
   const [tooFast, setTooFast] = useState(false);
   const startRef = useRef(Date.now());
   const cloze = useMemo(() => buildCloze(answer), [answer]);
+  const minTimeMs = useMemo(
+    () => computeMinTimeMs(`${cloze.before} ${cloze.after}`),
+    [cloze],
+  );
 
   const options = useMemo(() => {
     const distractors = pickDistractors(answer, pool, 3);
@@ -43,15 +46,15 @@ export default function QuizQuestion({
   function choose(optId: string) {
     if (selectedId) return;
 
-    if (Date.now() - startRef.current < MIN_TIME_MS) {
+    if (Date.now() - startRef.current < minTimeMs) {
       setTooFast(true);
       return;
     }
 
     setSelectedId(optId);
-    const correct = optId === answer.id;
-    setTimeout(() => onAnswered(correct), 450);
   }
+
+  const isCorrect = selectedId === answer.id;
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
@@ -105,6 +108,15 @@ export default function QuizQuestion({
           );
         })}
       </div>
+
+      {selectedId && (
+        <button
+          onClick={() => onAnswered(isCorrect)}
+          className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"
+        >
+          Continue
+        </button>
+      )}
 
       <TooFastModal
         open={tooFast}
