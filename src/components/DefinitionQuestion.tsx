@@ -1,6 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { pickDistractors, shuffle } from "../data/course";
+import TooFastModal from "./TooFastModal";
+
+const MIN_TIME_MS = 1000;
 
 /**
  * Stage 3 — reverse-direction recall: show the word, pick its correct
@@ -12,16 +15,19 @@ export default function DefinitionQuestion({
   pool,
   index,
   total,
+  roundLabel,
   onAnswered,
 }: {
   answer: WordItem;
   pool: WordItem[];
   index: number;
   total: number;
+  roundLabel?: string;
   onAnswered: (correct: boolean) => void;
 }) {
-  const [wrongIds, setWrongIds] = useState<Set<string>>(new Set());
-  const [resolved, setResolved] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tooFast, setTooFast] = useState(false);
+  const startRef = useRef(Date.now());
 
   const options = useMemo(() => {
     const distractors = pickDistractors(answer, pool, 3);
@@ -29,14 +35,23 @@ export default function DefinitionQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answer.id]);
 
+  useEffect(() => {
+    startRef.current = Date.now();
+    setSelectedId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answer.id, index]);
+
   function choose(optId: string) {
-    if (resolved || wrongIds.has(optId)) return;
-    if (optId === answer.id) {
-      setResolved(true);
-      onAnswered(wrongIds.size === 0);
-    } else {
-      setWrongIds((prev) => new Set(prev).add(optId));
+    if (selectedId) return;
+
+    if (Date.now() - startRef.current < MIN_TIME_MS) {
+      setTooFast(true);
+      return;
     }
+
+    setSelectedId(optId);
+    const correct = optId === answer.id;
+    setTimeout(() => onAnswered(correct), 450);
   }
 
   return (
@@ -45,9 +60,15 @@ export default function DefinitionQuestion({
         <span>
           {index + 1} / {total}
         </span>
-        <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          Which meaning?
-        </span>
+        {roundLabel ? (
+          <span className="uppercase tracking-wide font-medium text-[#e8722c]">
+            {roundLabel}
+          </span>
+        ) : (
+          <span className="uppercase tracking-wide font-medium text-[#14274d]">
+            Which meaning?
+          </span>
+        )}
       </div>
 
       <div className="flex items-baseline gap-2">
@@ -60,18 +81,22 @@ export default function DefinitionQuestion({
       <div className="flex flex-col gap-2">
         {options.map((opt) => {
           const isCorrectOpt = opt.id === answer.id;
-          const isWrong = wrongIds.has(opt.id);
+          const isSelected = selectedId === opt.id;
           let style =
             "border-slate-200 hover:border-[#14274d] hover:bg-orange-50";
-          if (resolved && isCorrectOpt) {
-            style = "border-green-500 bg-green-50";
-          } else if (isWrong) {
-            style = "border-red-400 bg-red-50 opacity-60";
+          if (selectedId) {
+            if (isCorrectOpt) {
+              style = "border-green-500 bg-green-50";
+            } else if (isSelected) {
+              style = "border-red-400 bg-red-50";
+            } else {
+              style = "border-slate-200 opacity-50";
+            }
           }
           return (
             <button
               key={opt.id}
-              disabled={resolved || isWrong}
+              disabled={!!selectedId}
               onClick={() => choose(opt.id)}
               className={`text-left rounded-xl border px-4 py-3 transition ${style}`}
             >
@@ -80,6 +105,14 @@ export default function DefinitionQuestion({
           );
         })}
       </div>
+
+      <TooFastModal
+        open={tooFast}
+        onClose={() => {
+          setTooFast(false);
+          startRef.current = Date.now();
+        }}
+      />
     </div>
   );
 }

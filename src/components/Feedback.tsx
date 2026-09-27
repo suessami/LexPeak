@@ -18,7 +18,7 @@ export default function Feedback({
           wasCorrect ? "text-green-600" : "text-red-500"
         }`}
       >
-        {wasCorrect ? "Correct!" : "Got there — but not on the first try"}
+        {wasCorrect ? "Correct!" : "Not quite — this one will come back around"}
       </div>
 
       <div className="flex items-baseline gap-2">
