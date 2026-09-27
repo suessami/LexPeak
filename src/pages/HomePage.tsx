@@ -1,30 +1,29 @@
 import { useMemo, useState } from "react";
-import { TOTAL_UNITS, REVIEWS, getUnitWords, getReviewByAfterUnit } from "../data/course";
+import { TOTAL_UNITS, REVIEWS, getUnitWords } from "../data/course";
 import { getNextUnit, loadProgress } from "../data/progress";
 import { getStudentCode, isMasterCode } from "../data/studentCode";
 import { getReviewPassage } from "../data/reviewPassages";
 import { LogoMark, LexFox } from "../components/Brand";
 import type { Stage } from "./SessionPage";
+import type { ReviewSchedule } from "../data/types";
 
-/** 1–3 stars from a unit's last quiz score, same rough bands as 문단속. */
-function starsFor(score: { correct: number; total: number } | undefined): number {
-  if (!score || score.total === 0) return 0;
-  const pct = score.correct / score.total;
-  if (pct >= 0.9) return 3;
-  if (pct >= 0.7) return 2;
-  return 1;
-}
+type RoadmapStep =
+  | { kind: "unit"; unitNo: number }
+  | { kind: "review"; review: ReviewSchedule };
 
-function Stars({ count }: { count: number }) {
-  return (
-    <span className="text-xs tracking-wide">
-      {[1, 2, 3].map((i) => (
-        <span key={i} className={i <= count ? "text-[#e8722c]" : "text-slate-300"}>
-          ★
-        </span>
-      ))}
-    </span>
-  );
+/** The real sequence a student walks through: units 1..N, with a review
+ *  slotted in right after every unit that triggers one (from Unit 3 on,
+ *  every single unit — reviews roll forward covering the last 3 units,
+ *  they don't wait for a clean multiple of 3). */
+function buildRoadmap(): RoadmapStep[] {
+  const reviewByAfterUnit = new Map(REVIEWS.map((r) => [r.afterUnit, r]));
+  const steps: RoadmapStep[] = [];
+  for (let u = 1; u <= TOTAL_UNITS; u++) {
+    steps.push({ kind: "unit", unitNo: u });
+    const review = reviewByAfterUnit.get(u);
+    if (review) steps.push({ kind: "review", review });
+  }
+  return steps;
 }
 
 export default function HomePage({
@@ -38,28 +37,7 @@ export default function HomePage({
   const nextUnit = useMemo(() => getNextUnit(TOTAL_UNITS), []);
   const completedCount = Object.keys(progress.completedUnits).length;
   const isMaster = isMasterCode(getStudentCode());
-
-  // Recently completed units, most recent first — a short "where I've been"
-  // strip rather than a growing list of every unit ever finished.
-  const recentDone = useMemo(() => {
-    const done = Object.keys(progress.completedUnits)
-      .map(Number)
-      .sort((a, b) => a - b);
-    return done.slice(-6).reverse();
-  }, [progress]);
-
-  // The review due right after the unit that's now "next" — if the student
-  // is about to hit a review checkpoint, that's worth flagging as what
-  // comes right after today's unit, in the "upcoming" strip.
-  const upcomingReview = useMemo(
-    () => (nextUnit ? getReviewByAfterUnit(nextUnit) : undefined),
-    [nextUnit],
-  );
-  const upcomingUnits = useMemo(() => {
-    if (!nextUnit) return [];
-    const units = [nextUnit + 1, nextUnit + 2].filter((u) => u <= TOTAL_UNITS);
-    return units;
-  }, [nextUnit]);
+  const roadmap = useMemo(() => buildRoadmap(), []);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-8">
@@ -95,34 +73,6 @@ export default function HomePage({
               </div>
             </div>
 
-            {recentDone.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
-                  Where You've Been
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {recentDone.map((u) => {
-                    const wordCount = getUnitWords(u).length;
-                    return (
-                      <button
-                        key={u}
-                        onClick={() => onStartUnit(u)}
-                        className="shrink-0 w-32 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left hover:border-[#14274d] hover:bg-orange-50 transition"
-                      >
-                        <p className="text-sm font-semibold text-slate-800">
-                          Unit {u}
-                        </p>
-                        <p className="text-xs text-slate-400 mb-1">
-                          {wordCount} words
-                        </p>
-                        <Stars count={starsFor(progress.unitScores[u])} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {nextUnit && (
               <div className="flex flex-col gap-2">
                 <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
@@ -153,36 +103,62 @@ export default function HomePage({
               </div>
             )}
 
-            {(upcomingUnits.length > 0 || upcomingReview) && (
-              <div className="flex flex-col gap-2">
-                <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
-                  Coming Up
-                </p>
-                <div className="flex flex-col gap-2">
-                  {upcomingReview && (
-                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between opacity-60">
-                      <span className="text-sm font-medium text-slate-500">
-                        Review {upcomingReview.reviewNo} · Units{" "}
-                        {upcomingReview.coversUnits[0]}–
-                        {upcomingReview.coversUnits[2]}
-                      </span>
-                      <span className="text-xs text-slate-400">🔒 Locked</span>
-                    </div>
-                  )}
-                  {upcomingUnits.map((u) => (
-                    <div
-                      key={u}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between opacity-60"
-                    >
-                      <span className="text-sm font-medium text-slate-500">
-                        Unit {u}
-                      </span>
-                      <span className="text-xs text-slate-400">🔒 Locked</span>
-                    </div>
-                  ))}
+            <div className="flex flex-col gap-2">
+              <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
+                Course Roadmap
+              </p>
+              <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-4">
+                <div className="grid grid-cols-6 gap-2 max-h-80 overflow-y-auto">
+                  {roadmap.map((step) => {
+                    if (step.kind === "unit") {
+                      const u = step.unitNo;
+                      const done = !!progress.completedUnits[u];
+                      const isToday = u === nextUnit;
+                      const locked = !done && !isToday;
+                      return (
+                        <button
+                          key={`u${u}`}
+                          onClick={() => onStartUnit(u)}
+                          disabled={locked}
+                          title={`Unit ${u}`}
+                          className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${
+                            done
+                              ? "border-green-500 bg-green-50 text-green-700"
+                              : isToday
+                                ? "border-[#e8722c] bg-orange-50 text-[#14274d]"
+                                : "border-slate-200 bg-slate-50 text-slate-300"
+                          }`}
+                        >
+                          {u}
+                        </button>
+                      );
+                    }
+
+                    const r = step.review;
+                    const done = !!progress.completedReviews[r.reviewNo];
+                    const ready = !done && !!progress.completedUnits[r.afterUnit];
+                    const locked = !done && !ready;
+                    return (
+                      <button
+                        key={`r${r.reviewNo}`}
+                        onClick={() => onStartUnit(r.afterUnit, "reviewIntro")}
+                        disabled={locked}
+                        title={`Review ${r.reviewNo} · Units ${r.coversUnits[0]}–${r.coversUnits[2]}`}
+                        className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                          done
+                            ? "border-green-500 bg-green-100 text-green-700"
+                            : ready
+                              ? "border-purple-400 bg-purple-100 text-purple-700"
+                              : "border-purple-200 bg-purple-50 text-purple-300"
+                        }`}
+                      >
+                        R{r.reviewNo}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            </div>
           </>
         )}
 
