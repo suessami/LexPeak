@@ -9,7 +9,7 @@ import { markUnitComplete, markReviewComplete } from "../data/progress";
 import { getMilestone } from "../data/milestones";
 import { logProgress } from "../data/cloudSync";
 import LearnFlow from "../components/LearnFlow";
-import LearnFlowPredict from "../components/LearnFlowPredict";
+import LearnFlowPredict, { type WarmupResult } from "../components/LearnFlowPredict";
 import QuizFlow from "../components/QuizFlow";
 import WordFinder from "../components/WordFinder";
 import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
@@ -18,9 +18,12 @@ import ReviewPassageStage from "../components/ReviewPassageStage";
 import { getReviewPassage } from "../data/reviewPassages";
 import { LexFox } from "../components/Brand";
 import StageIntro from "../components/StageIntro";
+import { formatHeadword } from "../data/idiom";
+import type { WordItem } from "../data/types";
 
 export type Stage =
   | "learn"
+  | "warmupSummary"
   | "buildIntro"
   | "quiz"
   | "practiceIntro"
@@ -64,6 +67,11 @@ export default function SessionPage({
   // can retest exactly those words before moving on, instead of only
   // catching up on them at the next multi-unit Review checkpoint.
   const [missedIds, setMissedIds] = useState<Set<string>>(new Set());
+  // Warm-up is a guess, not a graded quiz, so a wrong guess there doesn't
+  // join missedIds/Quick Recap — it's just shown back on a right/wrong
+  // summary table before Build, so the guess gets corrected once, then
+  // the unit moves on.
+  const [warmupResults, setWarmupResults] = useState<WarmupResult[]>([]);
 
   const unitWords = useMemo(() => getUnitWords(unitNo), [unitNo]);
   const distractorPool = useMemo(() => getDistractorPool(unitNo), [unitNo]);
@@ -179,12 +187,23 @@ export default function SessionPage({
         <LearnFlowPredict
           words={unitWords}
           pool={distractorPool}
-          onDone={() => setStage("buildIntro")}
+          onDone={(results) => {
+            setWarmupResults(results);
+            setStage("warmupSummary");
+          }}
         />
       )}
 
       {stage === "learn" && !usePredictWarmup && (
         <LearnFlow words={unitWords} onDone={() => setStage("buildIntro")} />
+      )}
+
+      {stage === "warmupSummary" && (
+        <WarmupSummary
+          words={unitWords}
+          results={warmupResults}
+          onContinue={() => setStage("quiz")}
+        />
       )}
 
       {stage === "buildIntro" && (
@@ -354,6 +373,68 @@ export default function SessionPage({
           onNext={onExit}
         />
       )}
+    </div>
+  );
+}
+
+function WarmupSummary({
+  words,
+  results,
+  onContinue,
+}: {
+  words: WordItem[];
+  results: WarmupResult[];
+  onContinue: () => void;
+}) {
+  const correctById = new Map(results.map((r) => [r.wordId, r.correct]));
+
+  return (
+    <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between text-xs text-slate-400">
+        <span>Warm-up Recap</span>
+        <span className="uppercase tracking-wide font-medium text-[#14274d]">
+          How'd You Guess?
+        </span>
+      </div>
+
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="text-left text-xs text-slate-400 border-b border-slate-200">
+            <th className="py-2 pr-2 font-medium w-8">#</th>
+            <th className="py-2 pr-2 font-medium">Word</th>
+            <th className="py-2 pr-2 font-medium">Meaning</th>
+            <th className="py-2 font-medium text-center w-10">O/X</th>
+          </tr>
+        </thead>
+        <tbody>
+          {words.map((w, i) => {
+            const correct = correctById.get(w.id);
+            return (
+              <tr key={w.id} className="border-b border-slate-100 last:border-0">
+                <td className="py-2 pr-2 text-slate-400">{i + 1}</td>
+                <td className="py-2 pr-2 font-semibold text-[#14274d]">
+                  {formatHeadword(w.word)}
+                </td>
+                <td className="py-2 pr-2 text-slate-600">{w.meaningKo}</td>
+                <td className="py-2 text-center font-bold">
+                  {correct ? (
+                    <span className="text-green-600">O</span>
+                  ) : (
+                    <span className="text-red-500">X</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <button
+        onClick={onContinue}
+        className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition mt-2"
+      >
+        Continue to Build
+      </button>
     </div>
   );
 }

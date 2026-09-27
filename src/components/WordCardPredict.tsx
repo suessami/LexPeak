@@ -26,7 +26,7 @@ export default function WordCardPredict({
   pool: WordItem[];
   index: number;
   total: number;
-  onNext: () => void;
+  onNext: (correct: boolean) => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tooFast, setTooFast] = useState(false);
@@ -138,7 +138,7 @@ export default function WordCardPredict({
 
       {selectedId && (
         <button
-          onClick={onNext}
+          onClick={() => onNext(selectedId === item.id)}
           className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"
         >
           Next Word
