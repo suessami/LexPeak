@@ -37,7 +37,7 @@ export default function CodeGate({ onDone }: { onDone: () => void }) {
             className="w-32 h-auto object-contain mx-auto mb-2"
           />
           <h1 className="text-3xl font-extrabold text-[#14274d]">
-            Hey there! 👋
+            Hey there!
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Welcome to LexPeak — enter your student code to get started
