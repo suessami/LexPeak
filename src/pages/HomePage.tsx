@@ -20,8 +20,11 @@ export default function HomePage({
           <h1 className="text-4xl font-extrabold tracking-tight text-[#14274d]">
             LexPeak
           </h1>
+          <p className="text-sm text-slate-500 tracking-wide">
+            Learn with your crew.
+          </p>
           <p className="text-xs text-slate-400 tracking-wide">
-            Let's Pick. Reach the Peak.
+            One word higher.
           </p>
         </div>
 
@@ -60,14 +63,14 @@ function CourseCompleteCard({ total }: { total: number }) {
     <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-8 flex flex-col items-center gap-4 overflow-hidden relative">
       <Confetti />
       <LexFox size={130} />
-      <h2 className="text-xl font-bold text-slate-900">You've reached the peak! 🏔️</h2>
+      <h2 className="text-xl font-bold text-slate-900">Big win! 🎉</h2>
       <p className="text-slate-600 leading-relaxed">
         You completed all {total} units.
         <br />
-        What a journey with LexPeak!
+        Better words. Better you.
       </p>
       <div className="w-full rounded-xl bg-[#eef1f7] text-[#14274d] text-sm font-medium py-3">
-        Let's Pick. The next peak awaits 🚀
+        One word higher — there's always more to learn 🚀
       </div>
     </div>
   );

@@ -66,7 +66,7 @@ export default function DefinitionQuestion({
           </span>
         ) : (
           <span className="uppercase tracking-wide font-medium text-[#14274d]">
-            Which meaning?
+            Challenge
           </span>
         )}
       </div>

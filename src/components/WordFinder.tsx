@@ -104,7 +104,7 @@ export default function WordFinder({
     }
   }
 
-  const roundLabel = roundNum > 1 ? `Round ${roundNum} · Retry missed words` : "Find the word";
+  const roundLabel = roundNum > 1 ? `Round ${roundNum} · Retry missed words` : "Practice";
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">

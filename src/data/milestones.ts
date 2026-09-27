@@ -11,28 +11,28 @@ export type Milestone = {
 export const MILESTONES: Milestone[] = [
   {
     afterUnit: Math.round(TOTAL_UNITS * 0.25),
-    headline: "Basecamp Cleared",
-    body: "You've finished a quarter of the climb. Keep going!",
-    emoji: "🏕️",
+    headline: "Great Start",
+    body: "You've cleared a quarter of the units. Keep the streak going!",
+    emoji: "🎉",
   },
   {
     afterUnit: Math.round(TOTAL_UNITS * 0.5),
-    headline: "Halfway Up the Mountain",
-    body: "You're halfway to the peak. The view only gets better from here.",
-    emoji: "⛰️",
+    headline: "Halfway There",
+    body: "You're halfway through — solid work. Keep showing up.",
+    emoji: "🔥",
   },
   {
     afterUnit: LAST_B2_UNIT,
     headline: "B2 Level Complete",
-    body: "You've mastered every B2 word in the course. From here on, it's all C1 — the air gets thinner!",
+    body: "You've mastered every B2 word in the course. C1 words are next — you've got this.",
     emoji: "🎓",
     showFox: true,
   },
   {
     afterUnit: Math.round(TOTAL_UNITS * 0.85),
-    headline: "Almost at the Summit",
-    body: "Just a little further. The peak is in sight!",
-    emoji: "🌄",
+    headline: "Almost There",
+    body: "Just a few more units. Keep it up — you're so close.",
+    emoji: "🚀",
   },
 ].sort((a, b) => a.afterUnit - b.afterUnit);
 

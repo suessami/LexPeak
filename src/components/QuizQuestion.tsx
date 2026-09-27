@@ -65,7 +65,7 @@ export default function QuizQuestion({
           </span>
         ) : (
           <span className="uppercase tracking-wide font-medium text-[#14274d]">
-            {answer.itemType === "idiom" ? "Phrase" : "Vocabulary"} Quiz
+            Build
           </span>
         )}
       </div>

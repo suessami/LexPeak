@@ -142,7 +142,7 @@ export default function SessionPage({
 
       {stage === "unitResult" && (
         <ResultCard
-          title="Unit Complete!"
+          title="Solid work!"
           correct={unitScore.correct}
           total={unitScore.total}
           buttonLabel={
@@ -175,7 +175,7 @@ export default function SessionPage({
       {stage === "reviewIntro" && review && (
         <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4 text-center">
           <h2 className="text-xl font-semibold text-slate-900">
-            Time for a Review
+            Quick Review
           </h2>
           <p className="text-slate-600">
             Let's review the words from Units {review.coversUnits[0]}–
@@ -196,7 +196,7 @@ export default function SessionPage({
 
       {stage === "reviewResult" && (
         <ResultCard
-          title="Review Complete!"
+          title="Nice session!"
           correct={reviewScore.correct}
           total={reviewScore.total}
           buttonLabel="Home"

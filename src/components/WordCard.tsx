@@ -16,7 +16,7 @@ export default function WordCard({
           {index + 1} / {total}
         </span>
         <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          {item.itemType === "idiom" ? "Phrase" : "Vocabulary"} · {item.level}
+          Warm-up · {item.itemType === "idiom" ? "Phrase" : "Vocabulary"} · {item.level}
         </span>
       </div>
 

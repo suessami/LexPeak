@@ -137,7 +137,7 @@ export default function PassageStage({
       <div className="flex items-center justify-between text-xs text-slate-400">
         <span>Passage</span>
         <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          Fill in the blanks
+          Win
         </span>
       </div>
 
