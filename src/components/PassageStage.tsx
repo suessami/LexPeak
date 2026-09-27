@@ -3,6 +3,7 @@ import type { WordItem } from "../data/types";
 import { buildCloze } from "../data/cloze";
 import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
+import { formatHeadword, splitIdiomSurface } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
 
 const MAX_ATTEMPTS = 2;
@@ -18,6 +19,28 @@ type Tile = {
   id: string;
   word: string;
 };
+
+/**
+ * Renders a filled blank's content. Idioms are stored in dictionary form
+ * with a "~" placeholder (e.g. "take ~ into account"), which is never what
+ * actually appeared in the sentence — showing it verbatim reads as broken
+ * ("take ~ into account" inline in a real sentence). Instead this shows the
+ * real inserted text, underlining only the fixed idiom anchors so it's
+ * still clear which part was the tested vocabulary.
+ */
+function FilledWord({ item }: { item: WordItem }) {
+  const { head, middle, tail } = splitIdiomSurface(item);
+  if (!tail) {
+    return <span className="underline decoration-2 underline-offset-2">{head}</span>;
+  }
+  return (
+    <>
+      <span className="underline decoration-2 underline-offset-2">{head}</span>
+      <span>{middle}</span>
+      <span className="underline decoration-2 underline-offset-2">{tail}</span>
+    </>
+  );
+}
 
 /**
  * Final stage — a short passage (the unit's own example sentences, one
@@ -43,7 +66,9 @@ export default function PassageStage({
     () =>
       words.map((w) => {
         const c = buildCloze(w);
-        return { id: w.id, before: c.before, after: c.after, correctTileId: w.id };
+        const before = c.segments[0]?.text ?? "";
+        const after = c.segments[c.segments.length - 1]?.text ?? "";
+        return { id: w.id, before, after, correctTileId: w.id };
       }),
     [words],
   );
@@ -189,7 +214,11 @@ export default function PassageStage({
                         : "border-slate-300 border-dashed text-slate-400"
                 }`}
               >
-                {filledTile ? filledTile.word : "______"}
+                {filledTile ? (
+                  <FilledWord item={words.find((w) => w.id === filledTile.id)!} />
+                ) : (
+                  "______"
+                )}
               </button>
               {b.after}
             </p>
@@ -217,7 +246,7 @@ export default function PassageStage({
                   : "border-slate-200 hover:border-[#14274d] hover:bg-orange-50"
               } ${!activeBlank || locked ? "opacity-50" : ""}`}
             >
-              {tile.word}
+              {formatHeadword(tile.word)}
             </button>
           ))}
         </div>

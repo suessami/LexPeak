@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
+import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
 
 const MAX_ATTEMPTS = 2;
@@ -171,7 +172,7 @@ export default function WordFinder({
               onClick={() => tap(tile)}
               className={`rounded-xl border px-3 py-3 font-medium text-slate-800 transition ${style}`}
             >
-              {tile.word}
+              {formatHeadword(tile.word)}
             </button>
           );
         })}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { WordItem } from "../data/types";
 import { computeMinTimeMs } from "../data/timing";
+import { formatHeadword } from "../data/idiom";
 
 export default function Feedback({
   item,
@@ -49,7 +50,9 @@ export default function Feedback({
       </div>
 
       <div className="flex items-baseline gap-2">
-        <h2 className="text-2xl font-semibold text-slate-900">{item.word}</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          {formatHeadword(item.word)}
+        </h2>
         <span className="text-sm text-slate-400 italic">{item.pos}</span>
       </div>
 

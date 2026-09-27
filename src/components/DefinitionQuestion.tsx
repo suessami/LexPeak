@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
 import { pickDistractors, shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
+import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
 
 /**
@@ -84,7 +85,7 @@ export default function DefinitionQuestion({
 
       <div className="flex items-baseline gap-2">
         <h2 className="text-2xl font-semibold text-slate-900">
-          {answer.word}
+          {formatHeadword(answer.word)}
         </h2>
         <span className="text-sm text-slate-400 italic">{answer.pos}</span>
       </div>

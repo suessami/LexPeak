@@ -1,4 +1,5 @@
 import type { WordItem } from "../data/types";
+import { formatHeadword } from "../data/idiom";
 
 export default function WordCard({
   item,
@@ -22,7 +23,9 @@ export default function WordCard({
 
       <div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <h2 className="text-2xl font-semibold text-slate-900">{item.word}</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            {formatHeadword(item.word)}
+          </h2>
           <span className="text-sm text-slate-400 italic">{item.pos}</span>
         </div>
       </div>

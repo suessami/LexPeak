@@ -3,6 +3,7 @@ import type { WordItem } from "../data/types";
 import { buildCloze } from "../data/cloze";
 import { pickDistractors, shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
+import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
 
 export default function QuizQuestion({
@@ -24,10 +25,7 @@ export default function QuizQuestion({
   const [tooFast, setTooFast] = useState(false);
   const startRef = useRef(Date.now());
   const cloze = useMemo(() => buildCloze(answer), [answer]);
-  const minTimeMs = useMemo(
-    () => computeMinTimeMs(`${cloze.before} ${cloze.after}`),
-    [cloze],
-  );
+  const minTimeMs = useMemo(() => computeMinTimeMs(answer.example), [answer]);
 
   const options = useMemo(() => {
     const distractors = pickDistractors(answer, pool, 3);
@@ -74,11 +72,18 @@ export default function QuizQuestion({
       </div>
 
       <p className="text-lg leading-relaxed text-slate-800">
-        {cloze.before}
-        <span className="inline-block min-w-[4.5rem] border-b-2 border-[#14274d] text-transparent select-none">
-          {cloze.blank || "     "}
-        </span>
-        {cloze.after}
+        {cloze.segments.map((seg, i) =>
+          seg.blank ? (
+            <span
+              key={i}
+              className="inline-block min-w-[3rem] border-b-2 border-[#14274d] text-transparent select-none"
+            >
+              {seg.text || "   "}
+            </span>
+          ) : (
+            <span key={i}>{seg.text}</span>
+          ),
+        )}
       </p>
 
       <div className="flex flex-col gap-2">
@@ -103,7 +108,7 @@ export default function QuizQuestion({
               onClick={() => choose(opt.id)}
               className={`text-left rounded-xl border px-4 py-3 transition ${style}`}
             >
-              {opt.word}
+              {formatHeadword(opt.word)}
             </button>
           );
         })}
