@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { setStudentCode, isMasterCode } from "../data/studentCode";
 import { verifyStudentCode } from "../data/cloudSync";
-import duoWave from "../assets/mascot/duo-wave.webp";
+import duoWave from "../assets/mascot/duo-wave-both.webp";
 
 export default function CodeGate({ onDone }: { onDone: () => void }) {
   const [value, setValue] = useState("");
