@@ -107,7 +107,7 @@ export default function WordCardPredict({
           {selectedId ? "Meaning" : "What do you think this means?"}
         </p>
         <div className="flex flex-col gap-2">
-          {options.map((opt) => {
+          {options.map((opt, i) => {
             const isCorrectOpt = opt.id === item.id;
             const isSelected = selectedId === opt.id;
             let style =
@@ -126,9 +126,10 @@ export default function WordCardPredict({
                 key={opt.id}
                 disabled={!!selectedId}
                 onClick={() => choose(opt.id)}
-                className={`text-left rounded-xl border px-4 py-3 text-sm transition ${style}`}
+                className={`text-left rounded-xl border px-4 py-3 text-sm transition flex gap-2 ${style}`}
               >
-                {opt.definitionEn}
+                <span className="font-semibold text-slate-400">{i + 1}.</span>
+                <span>{opt.definitionEn}</span>
               </button>
             );
           })}
