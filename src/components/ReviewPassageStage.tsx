@@ -260,11 +260,12 @@ export default function ReviewPassageStage({
               const blank = blankByWordId.get(id);
               const wordItem = wordById.get(id);
 
-              // A bracketing idiom's tail piece ("into account") is never
-              // its own clickable blank — it reads as ordinary sentence
-              // text throughout, and only gains the matching underline once
-              // the head is answered, so the two read as one connected
-              // idiom the moment it's solved.
+              // A bracketing idiom's tail piece ("into account") isn't
+              // shown at all until the head is answered — it isn't its own
+              // clickable blank, and it isn't given away as plain text
+              // either. Once correct, it appears in place alongside the
+              // head, underlined the same way, so "take" and "into
+              // account" land together as one idiom.
               if (seg.part === "tail") {
                 if (filledId && wordItem && blank) {
                   return (
@@ -272,11 +273,12 @@ export default function ReviewPassageStage({
                       key={sIdx}
                       className={isForced ? "text-slate-500" : "text-green-700"}
                     >
+                      {" "}
                       <FilledBlank item={wordItem} blank={blank} part="tail" />
                     </span>
                   );
                 }
-                return <span key={sIdx}>{blank?.tail ?? ""}</span>;
+                return <span key={sIdx} />;
               }
 
               return (
