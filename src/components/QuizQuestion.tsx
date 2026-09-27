@@ -56,19 +56,17 @@ export default function QuizQuestion({
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span>
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-slate-400">
           {index + 1} / {total}
         </span>
-        {roundLabel ? (
-          <span className="uppercase tracking-wide font-medium text-[#e8722c]">
-            {roundLabel}
-          </span>
-        ) : (
-          <span className="uppercase tracking-wide font-medium text-[#14274d]">
-            Build
-          </span>
-        )}
+        <h2
+          className={`text-2xl font-extrabold uppercase tracking-wide ${
+            roundLabel ? "text-[#e8722c]" : "text-[#14274d]"
+          }`}
+        >
+          {roundLabel || "Build"}
+        </h2>
       </div>
 
       <p className="text-lg leading-relaxed text-slate-800">
