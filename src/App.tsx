@@ -4,7 +4,7 @@ import SessionPage from "./pages/SessionPage";
 import ReportPage from "./pages/ReportPage";
 import CodeGate from "./pages/CodeGate";
 import StageIntro from "./components/StageIntro";
-import { getStudentCode } from "./data/studentCode";
+import { getStudentCode, isMasterCode, clearStudentCode } from "./data/studentCode";
 import { TOTAL_UNITS } from "./data/course";
 import { getNextUnit } from "./data/progress";
 
@@ -29,7 +29,7 @@ export default function App() {
     return <CodeGate onDone={() => setHasCode(true)} />;
   }
 
-  if (showSessionIntro && view.name === "home") {
+  if (showSessionIntro && view.name === "home" && !isMasterCode(getStudentCode())) {
     const nextUnit = getNextUnit(TOTAL_UNITS);
     if (nextUnit) {
       return (
@@ -58,6 +58,12 @@ export default function App() {
   return (
     <HomePage
       onStartUnit={(unitNo) => setView({ name: "session", unitNo })}
+      onLogout={() => {
+        clearStudentCode();
+        setHasCode(false);
+        setShowSessionIntro(true);
+        setView({ name: "home" });
+      }}
     />
   );
 }

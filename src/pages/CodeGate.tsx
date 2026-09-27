@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { setStudentCode } from "../data/studentCode";
+import { setStudentCode, isMasterCode } from "../data/studentCode";
 import { verifyStudentCode } from "../data/cloudSync";
 import { LogoMark } from "../components/Brand";
 
@@ -10,6 +10,13 @@ export default function CodeGate({ onDone }: { onDone: () => void }) {
   async function submit() {
     const code = value.trim();
     if (!code) return;
+
+    if (isMasterCode(code)) {
+      setStudentCode(code);
+      onDone();
+      return;
+    }
+
     setStatus("checking");
     const ok = await verifyStudentCode(code);
     if (!ok) {

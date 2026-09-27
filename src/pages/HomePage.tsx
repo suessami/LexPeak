@@ -1,19 +1,23 @@
 import { useMemo, useState } from "react";
 import { TOTAL_UNITS } from "../data/course";
 import { getNextUnit, loadProgress } from "../data/progress";
+import { getStudentCode, isMasterCode } from "../data/studentCode";
 import { LogoMark, LexFox } from "../components/Brand";
 
 export default function HomePage({
   onStartUnit,
+  onLogout,
 }: {
   onStartUnit: (unitNo: number) => void;
+  onLogout: () => void;
 }) {
   const [progress] = useState(loadProgress());
   const nextUnit = useMemo(() => getNextUnit(TOTAL_UNITS), []);
   const completedCount = Object.keys(progress.completedUnits).length;
+  const isMaster = isMasterCode(getStudentCode());
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md flex flex-col gap-6 items-center text-center">
         <div className="flex flex-col items-center gap-2">
           <LogoMark size={48} />
@@ -28,7 +32,7 @@ export default function HomePage({
           </p>
         </div>
 
-        {!nextUnit ? (
+        {!nextUnit && !isMaster ? (
           <CourseCompleteCard total={TOTAL_UNITS} />
         ) : (
           <>
@@ -45,14 +49,46 @@ export default function HomePage({
               </div>
             </div>
 
-            <button
-              onClick={() => onStartUnit(nextUnit)}
-              className="w-full rounded-xl bg-[#14274d] text-white font-semibold py-4 text-lg hover:opacity-90 transition"
-            >
-              Start Unit {nextUnit}
-            </button>
+            {nextUnit && (
+              <button
+                onClick={() => onStartUnit(nextUnit)}
+                className="w-full rounded-xl bg-[#14274d] text-white font-semibold py-4 text-lg hover:opacity-90 transition"
+              >
+                Start Unit {nextUnit}
+              </button>
+            )}
           </>
         )}
+
+        {isMaster && (
+          <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-4 flex flex-col gap-3">
+            <p className="text-xs uppercase tracking-wide font-medium text-[#e8722c]">
+              Master — jump to any unit
+            </p>
+            <div className="grid grid-cols-6 gap-2 max-h-72 overflow-y-auto">
+              {Array.from({ length: TOTAL_UNITS }, (_, i) => i + 1).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => onStartUnit(u)}
+                  className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${
+                    progress.completedUnits[u]
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-slate-200 text-slate-700 hover:border-[#14274d] hover:bg-orange-50"
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onLogout}
+          className="text-sm text-slate-400 hover:text-slate-600 underline"
+        >
+          Log out / switch code
+        </button>
       </div>
     </div>
   );
