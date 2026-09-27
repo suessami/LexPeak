@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { setStudentCode, isMasterCode } from "../data/studentCode";
 import { verifyStudentCode } from "../data/cloudSync";
-import { LogoMark } from "../components/Brand";
 
 export default function CodeGate({ onDone }: { onDone: () => void }) {
   const [value, setValue] = useState("");
@@ -30,7 +29,6 @@ export default function CodeGate({ onDone }: { onDone: () => void }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-center">
-        <LogoMark size={48} />
         <div>
           <h1 className="text-2xl font-bold text-[#14274d]">
             Welcome to LexPeak
