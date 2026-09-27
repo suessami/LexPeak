@@ -38,7 +38,7 @@ export const REVIEW_PASSAGES: ReviewPassage[] = [
     reviewNo: 1,
     paragraphs: [
       "Maria runs a small café in the old town. Every morning, the {{u001-w1}} of freshly ground coffee fills the shop before the first customer arrives, though {{u001-w2}} weather can keep people away entirely.",
-      "{{u001-w4}}, she trusts only one local supplier who has never let her down. She also serves an {{u002-w1}} blend for customers who avoid caffeine, and the shop's warm wooden decor {{u002-w2}} a cozy, homey feeling the moment you walk in.",
+      "Maria is picky about where her ingredients come from. {{u001-w4}}, she trusts only one local supplier who has never let her down. She also serves an {{u002-w1}} blend for customers who avoid caffeine, and the shop's warm wooden decor {{u002-w2}} a cozy, homey feeling the moment you walk in.",
       "When setting her prices, Maria {{u003-w1}}, since she never wants to lose regulars over a few cents. As the afternoon rush {{u003-w2}}, the line stretches out the door — but she'd rather {{u003-w3}} loyal customers than chase a quick sale. On {{u003-w4}} summer days, iced drinks outsell hot ones three to one.",
     ],
     blanks: [
