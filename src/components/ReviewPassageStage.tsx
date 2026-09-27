@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { WordItem } from "../data/types";
-import type { ReviewPassage } from "../data/reviewPassages";
+import type { ReviewPassage, ReviewPassageBlank } from "../data/reviewPassages";
 import { withAuthoredSurface } from "../data/reviewPassages";
 import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
@@ -9,7 +9,8 @@ import TooFastModal from "./TooFastModal";
 
 const MAX_ATTEMPTS = 2;
 
-type Segment = { text: string; wordId?: string };
+type Part = "head" | "tail";
+type Segment = { text: string; wordId?: string; part?: Part };
 type Tile = { id: string; word: string };
 
 function FilledWord({ item }: { item: WordItem }) {
@@ -26,16 +27,39 @@ function FilledWord({ item }: { item: WordItem }) {
   );
 }
 
+/** Renders a filled blank. For a plain word or a trailing-slot idiom
+ *  (`blank.surface`), this is the same whole-span display as before. For a
+ *  bracketing idiom authored with `blank.head`/`blank.tail`, each marker
+ *  shows only its own fixed piece — the free object between them was
+ *  already sitting in the paragraph as plain text. */
+function FilledBlank({
+  item,
+  blank,
+  part,
+}: {
+  item: WordItem;
+  blank: ReviewPassageBlank;
+  part?: Part;
+}) {
+  if (part === "head") {
+    return <span className="underline decoration-2 underline-offset-2">{blank.head}</span>;
+  }
+  if (part === "tail") {
+    return <span className="underline decoration-2 underline-offset-2">{blank.tail}</span>;
+  }
+  return <FilledWord item={withAuthoredSurface(item, blank.surface ?? "")} />;
+}
+
 function parseParagraph(text: string): Segment[] {
   const segments: Segment[] = [];
-  const re = /\{\{(.*?)\}\}/g;
+  const re = /\{\{([\w-]+)(?:#(head|tail))?\}\}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = re.exec(text))) {
     if (match.index > lastIndex) {
       segments.push({ text: text.slice(lastIndex, match.index) });
     }
-    segments.push({ text: "", wordId: match[1] });
+    segments.push({ text: "", wordId: match[1], part: match[2] as Part | undefined });
     lastIndex = match.index + match[0].length;
   }
   if (lastIndex < text.length) {
@@ -64,8 +88,8 @@ export default function ReviewPassageStage({
     () => new Map(reviewWords.map((w) => [w.id, w])),
     [reviewWords],
   );
-  const surfaceByWordId = useMemo(
-    () => new Map(passage.blanks.map((b) => [b.wordId, b.surface])),
+  const blankByWordId = useMemo(
+    () => new Map(passage.blanks.map((b) => [b.wordId, b])),
     [passage],
   );
 
@@ -74,11 +98,17 @@ export default function ReviewPassageStage({
     [passage],
   );
 
+  // Deduped: a bracketing idiom's head/tail markers share one wordId and
+  // must count as a single blank, not two.
   const blankIds = useMemo(() => {
+    const seen = new Set<string>();
     const ids: string[] = [];
     for (const para of parsedParagraphs) {
       for (const seg of para) {
-        if (seg.wordId) ids.push(seg.wordId);
+        if (seg.wordId && !seen.has(seg.wordId)) {
+          seen.add(seg.wordId);
+          ids.push(seg.wordId);
+        }
       }
     }
     return ids;
@@ -227,7 +257,7 @@ export default function ReviewPassageStage({
               const isActive = activeBlank === id;
               const isRevealing = revealBlankId === id;
               const isForced = forcedIds.has(id);
-              const surface = surfaceByWordId.get(id) ?? "";
+              const blank = blankByWordId.get(id);
               const wordItem = wordById.get(id);
               return (
                 <button
@@ -246,8 +276,10 @@ export default function ReviewPassageStage({
                           : "border-slate-300 border-dashed text-slate-400"
                   }`}
                 >
-                  {filledId && wordItem ? (
-                    <FilledWord item={withAuthoredSurface(wordItem, surface)} />
+                  {filledId && wordItem && blank ? (
+                    <FilledBlank item={wordItem} blank={blank} part={seg.part} />
+                  ) : seg.part ? (
+                    "___"
                   ) : (
                     "______"
                   )}
