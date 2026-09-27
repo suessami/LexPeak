@@ -6,7 +6,7 @@ import { getReviewPassage } from "../data/reviewPassages";
 import { LogoMark } from "../components/Brand";
 import type { Stage } from "./SessionPage";
 import type { ReviewSchedule } from "../data/types";
-import duoWave from "../assets/mascot/duo-wave.webp";
+import duoWave from "../assets/mascot/duo-wave-both.webp";
 import duoCelebrate from "../assets/mascot/duo-celebrate.webp";
 
 type RoadmapStep =
