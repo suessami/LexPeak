@@ -45,11 +45,11 @@ export default function SessionPage({
   onExit: () => void;
 }) {
   const [stage, setStage] = useState<Stage>("learn");
-  // Sample/experiment: try the "predict the meaning" Warm-up card instead of
-  // the default reveal-it-all one. Opt-in via URL so it doesn't change what
-  // other students see until it's decided on.
+  // "Predict the meaning" is now the default Warm-up card. ?warmup=classic
+  // keeps the old reveal-it-all card reachable in case it's ever needed for
+  // comparison again.
   const usePredictWarmup =
-    new URLSearchParams(window.location.search).get("warmup") === "predict";
+    new URLSearchParams(window.location.search).get("warmup") !== "classic";
   const [clozeScore, setClozeScore] = useState({ correct: 0, total: 0 });
   const [defineScore, setDefineScore] = useState({ correct: 0, total: 0 });
   const [unitScore, setUnitScore] = useState({ correct: 0, total: 0 });
