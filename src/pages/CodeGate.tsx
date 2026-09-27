@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { setStudentCode, isMasterCode } from "../data/studentCode";
 import { verifyStudentCode } from "../data/cloudSync";
+import duoWave from "../assets/mascot/duo-wave.webp";
 
 export default function CodeGate({ onDone }: { onDone: () => void }) {
   const [value, setValue] = useState("");
@@ -30,11 +31,16 @@ export default function CodeGate({ onDone }: { onDone: () => void }) {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md flex flex-col items-center gap-6 text-center">
         <div>
-          <h1 className="text-2xl font-bold text-[#14274d]">
-            Welcome to LexPeak
+          <img
+            src={duoWave}
+            alt=""
+            className="w-32 h-auto object-contain mx-auto mb-2"
+          />
+          <h1 className="text-3xl font-extrabold text-[#14274d]">
+            Hey there! 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Enter your student code to get started
+            Welcome to LexPeak — enter your student code to get started
           </p>
         </div>
 
