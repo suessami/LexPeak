@@ -259,6 +259,26 @@ export default function ReviewPassageStage({
               const isForced = forcedIds.has(id);
               const blank = blankByWordId.get(id);
               const wordItem = wordById.get(id);
+
+              // A bracketing idiom's tail piece ("into account") is never
+              // its own clickable blank — it reads as ordinary sentence
+              // text throughout, and only gains the matching underline once
+              // the head is answered, so the two read as one connected
+              // idiom the moment it's solved.
+              if (seg.part === "tail") {
+                if (filledId && wordItem && blank) {
+                  return (
+                    <span
+                      key={sIdx}
+                      className={isForced ? "text-slate-500" : "text-green-700"}
+                    >
+                      <FilledBlank item={wordItem} blank={blank} part="tail" />
+                    </span>
+                  );
+                }
+                return <span key={sIdx}>{blank?.tail ?? ""}</span>;
+              }
+
               return (
                 <button
                   key={sIdx}
