@@ -1,10 +1,31 @@
 import { useMemo, useState } from "react";
-import { TOTAL_UNITS, REVIEWS } from "../data/course";
+import { TOTAL_UNITS, REVIEWS, getUnitWords, getReviewByAfterUnit } from "../data/course";
 import { getNextUnit, loadProgress } from "../data/progress";
 import { getStudentCode, isMasterCode } from "../data/studentCode";
 import { getReviewPassage } from "../data/reviewPassages";
 import { LogoMark, LexFox } from "../components/Brand";
 import type { Stage } from "./SessionPage";
+
+/** 1–3 stars from a unit's last quiz score, same rough bands as 문단속. */
+function starsFor(score: { correct: number; total: number } | undefined): number {
+  if (!score || score.total === 0) return 0;
+  const pct = score.correct / score.total;
+  if (pct >= 0.9) return 3;
+  if (pct >= 0.7) return 2;
+  return 1;
+}
+
+function Stars({ count }: { count: number }) {
+  return (
+    <span className="text-xs tracking-wide">
+      {[1, 2, 3].map((i) => (
+        <span key={i} className={i <= count ? "text-[#e8722c]" : "text-slate-300"}>
+          ★
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function HomePage({
   onStartUnit,
@@ -18,30 +39,53 @@ export default function HomePage({
   const completedCount = Object.keys(progress.completedUnits).length;
   const isMaster = isMasterCode(getStudentCode());
 
+  // Recently completed units, most recent first — a short "where I've been"
+  // strip rather than a growing list of every unit ever finished.
+  const recentDone = useMemo(() => {
+    const done = Object.keys(progress.completedUnits)
+      .map(Number)
+      .sort((a, b) => a - b);
+    return done.slice(-6).reverse();
+  }, [progress]);
+
+  // The review due right after the unit that's now "next" — if the student
+  // is about to hit a review checkpoint, that's worth flagging as what
+  // comes right after today's unit, in the "upcoming" strip.
+  const upcomingReview = useMemo(
+    () => (nextUnit ? getReviewByAfterUnit(nextUnit) : undefined),
+    [nextUnit],
+  );
+  const upcomingUnits = useMemo(() => {
+    if (!nextUnit) return [];
+    const units = [nextUnit + 1, nextUnit + 2].filter((u) => u <= TOTAL_UNITS);
+    return units;
+  }, [nextUnit]);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md flex flex-col gap-6 items-center text-center">
-        <div className="flex flex-col items-center gap-2">
-          <LogoMark size={48} />
-          <h1 className="text-4xl font-extrabold tracking-tight text-[#14274d]">
-            LexPeak
-          </h1>
-          <p className="text-sm text-slate-500 tracking-wide">
-            Learn with your crew.
-          </p>
-          <p className="text-xs text-slate-400 tracking-wide">
-            One word higher.
-          </p>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-8">
+      <div className="w-full max-w-md flex flex-col gap-5 text-left">
+        <div className="flex items-center gap-3">
+          <LogoMark size={40} />
+          <div>
+            <h1 className="text-xl font-extrabold tracking-tight text-[#14274d]">
+              LexPeak
+            </h1>
+            <p className="text-xs text-slate-400 tracking-wide">
+              One word higher.
+            </p>
+          </div>
         </div>
 
         {!nextUnit && !isMaster ? (
           <CourseCompleteCard total={TOTAL_UNITS} />
         ) : (
           <>
-            <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-3">
-              <p className="text-slate-500 text-sm">Progress</p>
+            <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-5 flex flex-col gap-3">
+              <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
+                Course Progress
+              </p>
               <p className="text-2xl font-bold text-slate-900">
-                {completedCount} / {TOTAL_UNITS} units
+                {completedCount} / {TOTAL_UNITS} units learned
               </p>
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div
@@ -51,13 +95,93 @@ export default function HomePage({
               </div>
             </div>
 
+            {recentDone.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
+                  Where You've Been
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {recentDone.map((u) => {
+                    const wordCount = getUnitWords(u).length;
+                    return (
+                      <button
+                        key={u}
+                        onClick={() => onStartUnit(u)}
+                        className="shrink-0 w-32 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left hover:border-[#14274d] hover:bg-orange-50 transition"
+                      >
+                        <p className="text-sm font-semibold text-slate-800">
+                          Unit {u}
+                        </p>
+                        <p className="text-xs text-slate-400 mb-1">
+                          {wordCount} words
+                        </p>
+                        <Stars count={starsFor(progress.unitScores[u])} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {nextUnit && (
-              <button
-                onClick={() => onStartUnit(nextUnit)}
-                className="w-full rounded-xl bg-[#14274d] text-white font-semibold py-4 text-lg hover:opacity-90 transition"
-              >
-                Start Unit {nextUnit}
-              </button>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
+                  Today
+                </p>
+                <button
+                  onClick={() => onStartUnit(nextUnit)}
+                  className="w-full text-left rounded-2xl border-2 border-[#e8722c] bg-orange-50 p-5 flex flex-col gap-2 hover:opacity-90 transition"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#e8722c]">
+                      Unit {nextUnit}
+                    </span>
+                    <span className="text-xs font-semibold bg-[#e8722c] text-white rounded-full px-2 py-0.5">
+                      Start here
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-[#14274d]">
+                    {getUnitWords(nextUnit).length} new words to learn
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Warm up, build, practice, and finish with a passage.
+                  </p>
+                  <span className="text-sm font-semibold text-[#14274d]">
+                    Start today's session →
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {(upcomingUnits.length > 0 || upcomingReview) && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
+                  Coming Up
+                </p>
+                <div className="flex flex-col gap-2">
+                  {upcomingReview && (
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between opacity-60">
+                      <span className="text-sm font-medium text-slate-500">
+                        Review {upcomingReview.reviewNo} · Units{" "}
+                        {upcomingReview.coversUnits[0]}–
+                        {upcomingReview.coversUnits[2]}
+                      </span>
+                      <span className="text-xs text-slate-400">🔒 Locked</span>
+                    </div>
+                  )}
+                  {upcomingUnits.map((u) => (
+                    <div
+                      key={u}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between opacity-60"
+                    >
+                      <span className="text-sm font-medium text-slate-500">
+                        Unit {u}
+                      </span>
+                      <span className="text-xs text-slate-400">🔒 Locked</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </>
         )}
@@ -118,7 +242,7 @@ export default function HomePage({
 
         <button
           onClick={onLogout}
-          className="text-sm text-slate-400 hover:text-slate-600 underline"
+          className="self-center text-sm text-slate-400 hover:text-slate-600 underline"
         >
           Log out / switch code
         </button>
