@@ -283,21 +283,13 @@ export default function SessionPage({
       )}
 
       {stage === "reviewPassageIntro" && review && (
-        <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4 text-center">
-          <h2 className="text-xl font-semibold text-slate-900">
-            One More Thing
-          </h2>
-          <p className="text-slate-600">
-            Now let's see those words used in a brand-new passage. Read
-            along and fill in the blanks that fit.
-          </p>
-          <button
-            onClick={() => setStage("reviewPassage")}
-            className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"
-          >
-            Continue
-          </button>
-        </div>
+        <StageIntro
+          eyebrow="Review Challenge"
+          title="Cloze Test"
+          body="One more passage — read along and fill in the blanks that fit."
+          buttonLabel="Start Cloze Test"
+          onContinue={() => setStage("reviewPassage")}
+        />
       )}
 
       {stage === "reviewPassage" && reviewPassage && (
