@@ -16,7 +16,8 @@ export default function QuizQuestion({
   total: number;
   onAnswered: (correct: boolean) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [wrongIds, setWrongIds] = useState<Set<string>>(new Set());
+  const [resolved, setResolved] = useState(false);
   const cloze = useMemo(() => buildCloze(answer), [answer]);
 
   const options = useMemo(() => {
@@ -25,12 +26,14 @@ export default function QuizQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answer.id]);
 
-  const isAnswered = selected !== null;
-
   function choose(optId: string) {
-    if (isAnswered) return;
-    setSelected(optId);
-    onAnswered(optId === answer.id);
+    if (resolved || wrongIds.has(optId)) return;
+    if (optId === answer.id) {
+      setResolved(true);
+      onAnswered(wrongIds.size === 0);
+    } else {
+      setWrongIds((prev) => new Set(prev).add(optId));
+    }
   }
 
   return (
@@ -47,28 +50,26 @@ export default function QuizQuestion({
       <p className="text-lg leading-relaxed text-slate-800">
         {cloze.before}
         <span className="inline-block min-w-[4.5rem] border-b-2 border-[#14274d] text-transparent select-none">
-          {cloze.blank || "     "}
+          {cloze.blank || "     "}
         </span>
         {cloze.after}
       </p>
 
       <div className="flex flex-col gap-2">
         {options.map((opt) => {
-          const chosen = selected === opt.id;
-          const correct = opt.id === answer.id;
+          const isCorrectOpt = opt.id === answer.id;
+          const isWrong = wrongIds.has(opt.id);
           let style =
             "border-slate-200 hover:border-[#14274d] hover:bg-orange-50";
-          if (isAnswered && correct) {
+          if (resolved && isCorrectOpt) {
             style = "border-green-500 bg-green-50";
-          } else if (isAnswered && chosen && !correct) {
-            style = "border-red-400 bg-red-50";
-          } else if (isAnswered) {
-            style = "border-slate-200 opacity-60";
+          } else if (isWrong) {
+            style = "border-red-400 bg-red-50 opacity-60";
           }
           return (
             <button
               key={opt.id}
-              disabled={isAnswered}
+              disabled={resolved || isWrong}
               onClick={() => choose(opt.id)}
               className={`text-left rounded-xl border px-4 py-3 transition ${style}`}
             >
