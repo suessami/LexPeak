@@ -16,12 +16,17 @@ import PassageStage from "../components/PassageStage";
 import ReviewPassageStage from "../components/ReviewPassageStage";
 import { getReviewPassage } from "../data/reviewPassages";
 import { LexFox } from "../components/Brand";
+import StageIntro from "../components/StageIntro";
 
 type Stage =
   | "learn"
+  | "buildIntro"
   | "quiz"
+  | "practiceIntro"
   | "wordFinder"
+  | "challengeIntro"
   | "defineQuiz"
+  | "winIntro"
   | "passage"
   | "unitResult"
   | "milestone"
@@ -78,12 +83,12 @@ export default function SessionPage({
 
   function handleClozeQuizComplete(correct: number, total: number) {
     setClozeScore({ correct, total });
-    setStage("wordFinder");
+    setStage("practiceIntro");
   }
 
   function handleDefineQuizComplete(correct: number, total: number) {
     setDefineScore({ correct, total });
-    setStage("passage");
+    setStage("winIntro");
   }
 
   function handlePassageComplete(correct: number, total: number) {
@@ -137,18 +142,48 @@ export default function SessionPage({
       </div>
 
       {stage === "learn" && (
-        <LearnFlow words={unitWords} onDone={() => setStage("quiz")} />
+        <LearnFlow words={unitWords} onDone={() => setStage("buildIntro")} />
+      )}
+
+      {stage === "buildIntro" && (
+        <StageIntro
+          eyebrow="Up Next"
+          title="Build"
+          body="Quick multiple choice — let's build these words into memory."
+          buttonLabel="Start Build"
+          onContinue={() => setStage("quiz")}
+        />
       )}
 
       {stage === "quiz" && (
         <QuizFlow words={unitWords} onComplete={handleClozeQuizComplete} />
       )}
 
+      {stage === "practiceIntro" && (
+        <StageIntro
+          eyebrow="Up Next"
+          title="Practice"
+          body="Find the matching word for each clue."
+          buttonLabel="Start Practice"
+          onContinue={() => setStage("wordFinder")}
+        />
+      )}
+
       {stage === "wordFinder" && (
         <WordFinder
           words={unitWords}
           pool={distractorPool}
-          onDone={() => setStage("defineQuiz")}
+          onDone={() => setStage("challengeIntro")}
+        />
+      )}
+
+      {stage === "challengeIntro" && (
+        <StageIntro
+          eyebrow="Up Next"
+          title="Challenge"
+          body="Flip it around — pick the word that matches the definition."
+          buttonLabel="Start Challenge"
+          onContinue={() => setStage("defineQuiz")}
         />
       )}
 
@@ -156,6 +191,16 @@ export default function SessionPage({
         <DefinitionQuizFlow
           words={unitWords}
           onComplete={handleDefineQuizComplete}
+        />
+      )}
+
+      {stage === "winIntro" && (
+        <StageIntro
+          eyebrow="Last Stretch"
+          title="Win"
+          body="One short passage — fill in the blanks to finish the unit."
+          buttonLabel="Start Win"
+          onContinue={() => setStage("passage")}
         />
       )}
 
