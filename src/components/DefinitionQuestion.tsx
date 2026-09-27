@@ -72,13 +72,9 @@ export default function DefinitionQuestion({
         <span>
           {index + 1} / {total}
         </span>
-        {roundLabel ? (
+        {roundLabel && (
           <span className="uppercase tracking-wide font-medium text-[#e8722c]">
             {roundLabel}
-          </span>
-        ) : (
-          <span className="uppercase tracking-wide font-medium text-[#14274d]">
-            Challenge
           </span>
         )}
       </div>

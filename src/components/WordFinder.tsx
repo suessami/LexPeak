@@ -139,7 +139,7 @@ export default function WordFinder({
     }
   }
 
-  const roundLabel = roundNum > 1 ? `Round ${roundNum} · Retry missed words` : "Practice";
+  const roundLabel = roundNum > 1 ? `Round ${roundNum} · Retry missed words` : null;
   const triesLeft = MAX_ATTEMPTS - attemptCount;
 
   return (
@@ -148,9 +148,11 @@ export default function WordFinder({
         <span>
           {Math.min(clueIndex + 1, roundQueue.length)} / {roundQueue.length}
         </span>
-        <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          {roundLabel}
-        </span>
+        {roundLabel && (
+          <span className="uppercase tracking-wide font-medium text-[#e8722c]">
+            {roundLabel}
+          </span>
+        )}
       </div>
 
       <div className="min-h-[3.5rem]">

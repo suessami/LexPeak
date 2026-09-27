@@ -189,11 +189,8 @@ export default function PassageStage({
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="text-xs text-slate-400">
         <span>Passage</span>
-        <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          Win
-        </span>
       </div>
 
       <div className="flex flex-col gap-3 text-slate-800 leading-relaxed">

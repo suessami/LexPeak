@@ -46,6 +46,23 @@ export type Stage =
   | "reviewPassage"
   | "reviewResult";
 
+// Page-level heading shown between the Home/Unit row and the stage's own
+// card, so the current stage name reads as a section title rather than a
+// tiny tag that (when placed inside the card) could be mistaken for part
+// of the question itself. Intro/result screens already carry their own
+// big title inside the card, so they're left out here.
+const STAGE_HEADINGS: Partial<Record<Stage, string>> = {
+  learn: "Warm-up",
+  warmupSummary: "Warm-up Recap",
+  quiz: "Build",
+  wordFinder: "Practice",
+  defineQuiz: "Challenge",
+  passage: "Win",
+  recap: "Quick Recap",
+  review: "Review",
+  reviewPassage: "Cloze Test",
+};
+
 export default function SessionPage({
   unitNo,
   startAt,
@@ -186,6 +203,12 @@ export default function SessionPage({
         </button>
         <span className="text-sm text-slate-500">Unit {unitNo}</span>
       </div>
+
+      {STAGE_HEADINGS[stage] && (
+        <h1 className="w-full max-w-md text-2xl font-extrabold uppercase tracking-wide text-[#14274d] mb-3">
+          {STAGE_HEADINGS[stage]}
+        </h1>
+      )}
 
       {stage === "learn" && usePredictWarmup && (
         <LearnFlowPredict
