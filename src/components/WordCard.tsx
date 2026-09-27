@@ -23,16 +23,19 @@ export default function WordCard({
 
       <div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <h2 className="text-2xl font-semibold text-slate-900">
+          <h2
+            className="text-2xl font-bold text-[#e8722c]"
+            style={{ WebkitTextStroke: "0.6px #14274d" }}
+          >
             {formatHeadword(item.word)}
           </h2>
           <span className="text-sm text-slate-400 italic">{item.pos}</span>
         </div>
       </div>
 
-      <p className="text-slate-700 leading-relaxed">{item.definitionEn}</p>
+      <p className="text-[#14274d] leading-relaxed">{item.definitionEn}</p>
 
-      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 leading-relaxed">
+      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-[#14274d] leading-relaxed">
         {item.example}
       </div>
     </div>
