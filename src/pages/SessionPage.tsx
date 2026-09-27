@@ -29,6 +29,8 @@ export type Stage =
   | "defineQuiz"
   | "winIntro"
   | "passage"
+  | "recapIntro"
+  | "recap"
   | "unitResult"
   | "milestone"
   | "reviewIntro"
@@ -57,6 +59,11 @@ export default function SessionPage({
   const [unitScore, setUnitScore] = useState({ correct: 0, total: 0 });
   const [reviewQuizScore, setReviewQuizScore] = useState({ correct: 0, total: 0 });
   const [reviewScore, setReviewScore] = useState({ correct: 0, total: 0 });
+  // Any word missed (not right on the first try) in Build, Practice,
+  // Challenge, or Win — collected across the whole unit so a short recap
+  // can retest exactly those words before moving on, instead of only
+  // catching up on them at the next multi-unit Review checkpoint.
+  const [missedIds, setMissedIds] = useState<Set<string>>(new Set());
 
   const unitWords = useMemo(() => getUnitWords(unitNo), [unitNo]);
   const distractorPool = useMemo(() => getDistractorPool(unitNo), [unitNo]);
@@ -70,6 +77,19 @@ export default function SessionPage({
     [review],
   );
   const milestone = useMemo(() => getMilestone(unitNo), [unitNo]);
+  const recapWords = useMemo(
+    () => unitWords.filter((w) => missedIds.has(w.id)),
+    [unitWords, missedIds],
+  );
+
+  function addMissed(ids: string[]) {
+    if (ids.length === 0) return;
+    setMissedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
 
   function goPastUnitResult() {
     if (milestone) {
@@ -89,17 +109,19 @@ export default function SessionPage({
     }
   }
 
-  function handleClozeQuizComplete(correct: number, total: number) {
+  function handleClozeQuizComplete(correct: number, total: number, wrongIds: string[]) {
     setClozeScore({ correct, total });
+    addMissed(wrongIds);
     setStage("practiceIntro");
   }
 
-  function handleDefineQuizComplete(correct: number, total: number) {
+  function handleDefineQuizComplete(correct: number, total: number, wrongIds: string[]) {
     setDefineScore({ correct, total });
+    addMissed(wrongIds);
     setStage("winIntro");
   }
 
-  function handlePassageComplete(correct: number, total: number) {
+  function handlePassageComplete(correct: number, total: number, wrongIds: string[]) {
     const combined = {
       correct: clozeScore.correct + defineScore.correct + correct,
       total: clozeScore.total + defineScore.total + total,
@@ -107,7 +129,11 @@ export default function SessionPage({
     markUnitComplete(unitNo, combined.correct, combined.total);
     logProgress("unit", unitNo, combined.correct, combined.total);
     setUnitScore(combined);
-    setStage("unitResult");
+
+    const finalMissed = new Set(missedIds);
+    wrongIds.forEach((id) => finalMissed.add(id));
+    setMissedIds(finalMissed);
+    setStage(finalMissed.size > 0 ? "recapIntro" : "unitResult");
   }
 
   function handleReviewQuizComplete(correct: number, total: number) {
@@ -189,7 +215,10 @@ export default function SessionPage({
         <WordFinder
           words={unitWords}
           pool={distractorPool}
-          onDone={() => setStage("challengeIntro")}
+          onDone={(wrongIds) => {
+            addMissed(wrongIds);
+            setStage("challengeIntro");
+          }}
         />
       )}
 
@@ -226,6 +255,22 @@ export default function SessionPage({
           pool={distractorPool}
           onComplete={handlePassageComplete}
         />
+      )}
+
+      {stage === "recapIntro" && (
+        <StageIntro
+          eyebrow="Before You Go"
+          title="Quick Recap"
+          body={`Let's make sure ${recapWords.length} tricky ${
+            recapWords.length === 1 ? "word" : "words"
+          } stuck before moving on.`}
+          buttonLabel="Start Recap"
+          onContinue={() => setStage("recap")}
+        />
+      )}
+
+      {stage === "recap" && (
+        <QuizFlow words={recapWords} onComplete={() => setStage("unitResult")} />
       )}
 
       {stage === "unitResult" && (

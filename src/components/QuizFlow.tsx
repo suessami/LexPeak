@@ -19,7 +19,7 @@ export default function QuizFlow({
   onComplete,
 }: {
   words: WordItem[];
-  onComplete: (correct: number, total: number) => void;
+  onComplete: (correct: number, total: number, wrongIds: string[]) => void;
 }) {
   const [roundQueue, setRoundQueue] = useState<WordItem[]>(() => shuffle(words));
   const [roundNum, setRoundNum] = useState(1);
@@ -65,7 +65,7 @@ export default function QuizFlow({
     }
 
     const correctCount = words.length - firstAttemptWrongIds.size;
-    onComplete(correctCount, words.length);
+    onComplete(correctCount, words.length, Array.from(firstAttemptWrongIds));
   }
 
   const isLastOverall = isLastInRound && !(roundWrongs.length > 0 && roundNum < MAX_ROUNDS);

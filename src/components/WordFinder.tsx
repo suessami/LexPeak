@@ -27,7 +27,7 @@ export default function WordFinder({
 }: {
   words: WordItem[];
   pool: WordItem[];
-  onDone: () => void;
+  onDone: (wrongIds: string[]) => void;
 }) {
   const tiles = useMemo(() => {
     const otherWords = pool.filter((w) => !words.some((u) => u.id === w.id));
@@ -38,6 +38,9 @@ export default function WordFinder({
   const [roundQueue, setRoundQueue] = useState<WordItem[]>(() => shuffle(words));
   const [roundNum, setRoundNum] = useState(1);
   const [roundWrongs, setRoundWrongs] = useState<WordItem[]>([]);
+  const [firstAttemptWrongIds, setFirstAttemptWrongIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [clueIndex, setClueIndex] = useState(0);
   const [attemptCount, setAttemptCount] = useState(0);
@@ -60,7 +63,11 @@ export default function WordFinder({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClue?.id, roundNum]);
 
-  function goToNext(nextFound: Set<string>, nextWrongs: WordItem[]) {
+  function goToNext(
+    nextFound: Set<string>,
+    nextWrongs: WordItem[],
+    nextFirstWrongIds: Set<string>,
+  ) {
     const nextIndex = clueIndex + 1;
     if (nextIndex < roundQueue.length) {
       setClueIndex(nextIndex);
@@ -87,7 +94,7 @@ export default function WordFinder({
       setFoundIds(finalFound);
     }
     setFinished(true);
-    setTimeout(onDone, 500);
+    setTimeout(() => onDone(Array.from(nextFirstWrongIds)), 500);
   }
 
   function tap(tile: WordItem) {
@@ -103,7 +110,7 @@ export default function WordFinder({
       nextFound.add(tile.id);
       setFoundIds(nextFound);
       setWrongId(null);
-      goToNext(nextFound, roundWrongs);
+      goToNext(nextFound, roundWrongs, firstAttemptWrongIds);
     } else {
       const nextAttempts = attemptCount + 1;
       setLocked(true);
@@ -112,9 +119,14 @@ export default function WordFinder({
         setRevealId(currentClue.id);
         const nextWrongs = [...roundWrongs, currentClue];
         setRoundWrongs(nextWrongs);
+        const nextFirstWrongIds =
+          roundNum === 1
+            ? new Set(firstAttemptWrongIds).add(currentClue.id)
+            : firstAttemptWrongIds;
+        if (roundNum === 1) setFirstAttemptWrongIds(nextFirstWrongIds);
         setTimeout(() => {
           setRevealId(null);
-          goToNext(foundIds, nextWrongs);
+          goToNext(foundIds, nextWrongs, nextFirstWrongIds);
         }, 750);
       } else {
         setAttemptCount(nextAttempts);

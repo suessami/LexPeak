@@ -60,7 +60,7 @@ export default function PassageStage({
 }: {
   words: WordItem[];
   pool: WordItem[];
-  onComplete: (correct: number, total: number) => void;
+  onComplete: (correct: number, total: number, wrongIds: string[]) => void;
 }) {
   const blanks: Blank[] = useMemo(
     () =>
@@ -120,12 +120,19 @@ export default function PassageStage({
     setAttemptCount(0);
   }
 
-  function advanceToNext(updatedFilled: Record<string, string | null>, correctCount: number) {
+  function advanceToNext(
+    updatedFilled: Record<string, string | null>,
+    updatedFirstTry: Set<string>,
+  ) {
     const nextEmpty = blanks.find((b) => !updatedFilled[b.id]);
     setActiveBlank(nextEmpty ? nextEmpty.id : null);
     setAttemptCount(0);
     if (!nextEmpty) {
-      setTimeout(() => onComplete(correctCount, blanks.length), 500);
+      const wrongIds = blanks.map((b) => b.id).filter((id) => !updatedFirstTry.has(id));
+      setTimeout(
+        () => onComplete(updatedFirstTry.size, blanks.length, wrongIds),
+        500,
+      );
     }
   }
 
@@ -148,7 +155,7 @@ export default function PassageStage({
       setFilled(updatedFilled);
       if (wasFirstTry) setFirstTryCorrect(updatedFirstTry);
       setWrongTileId(null);
-      advanceToNext(updatedFilled, updatedFirstTry.size);
+      advanceToNext(updatedFilled, updatedFirstTry);
     } else {
       const nextAttempts = attemptCount + 1;
       if (nextAttempts >= MAX_ATTEMPTS) {
@@ -159,14 +166,14 @@ export default function PassageStage({
         setWrongTileId(null);
         setRevealBlankId(activeBlank);
         const revealedId = activeBlank;
-        const correctCountSoFar = firstTryCorrect.size;
+        const firstTrySoFar = firstTryCorrect;
         setTimeout(() => {
           const updatedFilled = { ...filled, [revealedId]: blank.correctTileId };
           setFilled(updatedFilled);
           setForcedIds((s) => new Set(s).add(revealedId));
           setRevealBlankId(null);
           setLocked(false);
-          advanceToNext(updatedFilled, correctCountSoFar);
+          advanceToNext(updatedFilled, firstTrySoFar);
         }, 650);
       } else {
         setAttemptCount(nextAttempts);
