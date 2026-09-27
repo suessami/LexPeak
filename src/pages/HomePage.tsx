@@ -3,18 +3,19 @@ import { TOTAL_UNITS, REVIEWS, getUnitWords } from "../data/course";
 import { getNextUnit, loadProgress } from "../data/progress";
 import { getStudentCode, isMasterCode } from "../data/studentCode";
 import { getReviewPassage } from "../data/reviewPassages";
-import { LogoMark, LexFox } from "../components/Brand";
+import { LogoMark } from "../components/Brand";
 import type { Stage } from "./SessionPage";
 import type { ReviewSchedule } from "../data/types";
+import duoWave from "../assets/mascot/duo-wave.webp";
+import duoCelebrate from "../assets/mascot/duo-celebrate.webp";
 
 type RoadmapStep =
   | { kind: "unit"; unitNo: number }
   | { kind: "review"; review: ReviewSchedule };
 
 /** The real sequence a student walks through: units 1..N, with a review
- *  slotted in right after every unit that triggers one (from Unit 3 on,
- *  every single unit — reviews roll forward covering the last 3 units,
- *  they don't wait for a clean multiple of 3). */
+ *  slotted in right after any unit that triggers one — one review per
+ *  clean 3-unit block (after Unit 3, 6, 9, ...), per REVIEWS. */
 function buildRoadmap(): RoadmapStep[] {
   const reviewByAfterUnit = new Map(REVIEWS.map((r) => [r.afterUnit, r]));
   const steps: RoadmapStep[] = [];
@@ -58,6 +59,20 @@ export default function HomePage({
           <CourseCompleteCard total={TOTAL_UNITS} />
         ) : (
           <>
+            <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-4 flex items-center gap-3">
+              <img
+                src={duoWave}
+                alt=""
+                className="w-16 h-auto object-contain shrink-0"
+              />
+              <div>
+                <p className="text-base font-bold text-[#14274d]">Hey there!</p>
+                <p className="text-sm text-slate-500">
+                  Same study crew, brighter you.
+                </p>
+              </div>
+            </div>
+
             <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-5 flex flex-col gap-3">
               <p className="text-xs uppercase tracking-wide font-medium text-slate-400">
                 Course Progress
@@ -231,7 +246,7 @@ function CourseCompleteCard({ total }: { total: number }) {
   return (
     <div className="w-full rounded-2xl bg-white shadow-md border border-slate-200 p-8 flex flex-col items-center gap-4 overflow-hidden relative">
       <Confetti />
-      <LexFox size={130} />
+      <img src={duoCelebrate} alt="" className="w-36 h-auto object-contain" />
       <h2 className="text-xl font-bold text-slate-900">Big win! 🎉</h2>
       <p className="text-slate-600 leading-relaxed">
         You completed all {total} units.

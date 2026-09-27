@@ -16,10 +16,11 @@ import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
 import PassageStage from "../components/PassageStage";
 import ReviewPassageStage from "../components/ReviewPassageStage";
 import { getReviewPassage } from "../data/reviewPassages";
-import { LexFox } from "../components/Brand";
 import StageIntro from "../components/StageIntro";
 import { formatHeadword } from "../data/idiom";
 import type { WordItem } from "../data/types";
+import duoCelebrate from "../assets/mascot/duo-celebrate.webp";
+import duoThumbsup from "../assets/mascot/duo-thumbsup.webp";
 
 export type Stage =
   | "learn"
@@ -297,6 +298,7 @@ export default function SessionPage({
           title="Solid work!"
           correct={unitScore.correct}
           total={unitScore.total}
+          image={duoThumbsup}
           buttonLabel={
             milestone ? "Continue" : review ? "Continue to Review" : "Home"
           }
@@ -307,7 +309,7 @@ export default function SessionPage({
       {stage === "milestone" && milestone && (
         <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-8 flex flex-col items-center gap-4 text-center">
           {milestone.showFox ? (
-            <LexFox size={110} />
+            <img src={duoCelebrate} alt="" className="w-28 h-auto object-contain" />
           ) : (
             <span className="text-5xl">{milestone.emoji}</span>
           )}
@@ -369,6 +371,7 @@ export default function SessionPage({
           title="Nice session!"
           correct={reviewScore.correct}
           total={reviewScore.total}
+          image={duoThumbsup}
           buttonLabel="Home"
           onNext={onExit}
         />
@@ -445,15 +448,20 @@ function ResultCard({
   total,
   buttonLabel,
   onNext,
+  image,
 }: {
   title: string;
   correct: number;
   total: number;
   buttonLabel: string;
   onNext: () => void;
+  image?: string;
 }) {
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4 text-center">
+      {image && (
+        <img src={image} alt="" className="w-20 h-auto object-contain mx-auto" />
+      )}
       <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
       <p className="text-3xl font-bold text-[#14274d]">
         {correct} / {total}
