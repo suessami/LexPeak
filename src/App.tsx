@@ -11,22 +11,19 @@ import { getNextUnit } from "./data/progress";
 type View = { name: "home" } | { name: "session"; unitNo: number };
 
 const reportCode = new URLSearchParams(window.location.search).get("report");
-const SESSION_INTRO_DATE_KEY = "vocabapp_session_intro_date";
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
+const SESSION_INTRO_SHOWN_KEY = "vocabapp_session_intro_shown";
 
 export default function App() {
   const [view, setView] = useState<View>({ name: "home" });
   const [hasCode, setHasCode] = useState(() => !!getStudentCode());
   // Landing straight on the unit list felt like walking into the middle of
-  // something. This shows once per DAY (not once per page load — reopening
-  // the same URL later the same day shouldn't re-interrupt), announcing
-  // what's next, before handing off to Home — same "here's what's coming"
-  // beat as the stage transitions inside a session.
+  // something. This announces what's next before handing off to Home.
+  // Tracked in sessionStorage (not localStorage): opening the URL fresh —
+  // a new tab, or the same tab after being closed — always shows it again,
+  // but reloading the same still-open tab after dismissing it won't loop
+  // back into it repeatedly.
   const [showSessionIntro, setShowSessionIntro] = useState(
-    () => localStorage.getItem(SESSION_INTRO_DATE_KEY) !== todayKey(),
+    () => sessionStorage.getItem(SESSION_INTRO_SHOWN_KEY) !== "1",
   );
 
   if (reportCode) {
@@ -48,7 +45,7 @@ export default function App() {
             body="Let's pick up where you left off — starting with a Warm-up."
             buttonLabel="Let's Go"
             onContinue={() => {
-              localStorage.setItem(SESSION_INTRO_DATE_KEY, todayKey());
+              sessionStorage.setItem(SESSION_INTRO_SHOWN_KEY, "1");
               setShowSessionIntro(false);
             }}
           />
