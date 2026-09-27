@@ -3,17 +3,22 @@ import {
   getUnitWords,
   getReviewByAfterUnit,
   getReviewWords,
+  getDistractorPool,
 } from "../data/course";
 import { markUnitComplete, markReviewComplete } from "../data/progress";
 import { getMilestone } from "../data/milestones";
 import { logProgress } from "../data/cloudSync";
 import LearnFlow from "../components/LearnFlow";
 import QuizFlow from "../components/QuizFlow";
+import WordFinder from "../components/WordFinder";
+import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
 import { LexFox } from "../components/Brand";
 
 type Stage =
   | "learn"
   | "quiz"
+  | "wordFinder"
+  | "defineQuiz"
   | "unitResult"
   | "milestone"
   | "reviewIntro"
@@ -28,10 +33,12 @@ export default function SessionPage({
   onExit: () => void;
 }) {
   const [stage, setStage] = useState<Stage>("learn");
+  const [clozeScore, setClozeScore] = useState({ correct: 0, total: 0 });
   const [unitScore, setUnitScore] = useState({ correct: 0, total: 0 });
   const [reviewScore, setReviewScore] = useState({ correct: 0, total: 0 });
 
   const unitWords = useMemo(() => getUnitWords(unitNo), [unitNo]);
+  const distractorPool = useMemo(() => getDistractorPool(unitNo), [unitNo]);
   const review = useMemo(() => getReviewByAfterUnit(unitNo), [unitNo]);
   const reviewWords = useMemo(
     () => (review ? getReviewWords(review) : []),
@@ -57,10 +64,19 @@ export default function SessionPage({
     }
   }
 
-  function handleUnitQuizComplete(correct: number, total: number) {
-    markUnitComplete(unitNo, correct, total);
-    logProgress("unit", unitNo, correct, total);
-    setUnitScore({ correct, total });
+  function handleClozeQuizComplete(correct: number, total: number) {
+    setClozeScore({ correct, total });
+    setStage("wordFinder");
+  }
+
+  function handleDefineQuizComplete(correct: number, total: number) {
+    const combined = {
+      correct: clozeScore.correct + correct,
+      total: clozeScore.total + total,
+    };
+    markUnitComplete(unitNo, combined.correct, combined.total);
+    logProgress("unit", unitNo, combined.correct, combined.total);
+    setUnitScore(combined);
     setStage("unitResult");
   }
 
@@ -90,7 +106,22 @@ export default function SessionPage({
       )}
 
       {stage === "quiz" && (
-        <QuizFlow words={unitWords} onComplete={handleUnitQuizComplete} />
+        <QuizFlow words={unitWords} onComplete={handleClozeQuizComplete} />
+      )}
+
+      {stage === "wordFinder" && (
+        <WordFinder
+          words={unitWords}
+          pool={distractorPool}
+          onDone={() => setStage("defineQuiz")}
+        />
+      )}
+
+      {stage === "defineQuiz" && (
+        <DefinitionQuizFlow
+          words={unitWords}
+          onComplete={handleDefineQuizComplete}
+        />
       )}
 
       {stage === "unitResult" && (
