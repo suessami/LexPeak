@@ -415,7 +415,7 @@ function WarmupSummary({
                 <td className="py-2 pr-2 font-semibold text-[#14274d]">
                   {formatHeadword(w.word)}
                 </td>
-                <td className="py-2 pr-2 text-slate-600">{w.meaningKo}</td>
+                <td className="py-2 pr-2 text-slate-600">{w.definitionEn}</td>
                 <td className="py-2 text-center font-bold">
                   {correct ? (
                     <span className="text-green-600">O</span>
