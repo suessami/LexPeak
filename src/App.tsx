@@ -1,6 +1,6 @@
 import { useState } from "react";
 import HomePage from "./pages/HomePage";
-import SessionPage from "./pages/SessionPage";
+import SessionPage, { type Stage } from "./pages/SessionPage";
 import ReportPage from "./pages/ReportPage";
 import CodeGate from "./pages/CodeGate";
 import StageIntro from "./components/StageIntro";
@@ -8,7 +8,9 @@ import { getStudentCode, isMasterCode, clearStudentCode } from "./data/studentCo
 import { TOTAL_UNITS } from "./data/course";
 import { getNextUnit } from "./data/progress";
 
-type View = { name: "home" } | { name: "session"; unitNo: number };
+type View =
+  | { name: "home" }
+  | { name: "session"; unitNo: number; startAt?: Stage };
 
 const reportCode = new URLSearchParams(window.location.search).get("report");
 const SESSION_INTRO_SHOWN_KEY = "vocabapp_session_intro_shown";
@@ -58,6 +60,7 @@ export default function App() {
     return (
       <SessionPage
         unitNo={view.unitNo}
+        startAt={view.startAt}
         onExit={() => setView({ name: "home" })}
       />
     );
@@ -65,7 +68,9 @@ export default function App() {
 
   return (
     <HomePage
-      onStartUnit={(unitNo) => setView({ name: "session", unitNo })}
+      onStartUnit={(unitNo, startAt) =>
+        setView({ name: "session", unitNo, startAt })
+      }
       onLogout={() => {
         clearStudentCode();
         setHasCode(false);

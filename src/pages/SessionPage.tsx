@@ -19,7 +19,7 @@ import { getReviewPassage } from "../data/reviewPassages";
 import { LexFox } from "../components/Brand";
 import StageIntro from "../components/StageIntro";
 
-type Stage =
+export type Stage =
   | "learn"
   | "buildIntro"
   | "quiz"
@@ -39,12 +39,14 @@ type Stage =
 
 export default function SessionPage({
   unitNo,
+  startAt,
   onExit,
 }: {
   unitNo: number;
+  startAt?: Stage;
   onExit: () => void;
 }) {
-  const [stage, setStage] = useState<Stage>("learn");
+  const [stage, setStage] = useState<Stage>(startAt ?? "learn");
   // "Predict the meaning" is now the default Warm-up card. ?warmup=classic
   // keeps the old reveal-it-all card reachable in case it's ever needed for
   // comparison again.
