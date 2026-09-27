@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="240" height="240">
+  <rect width="120" height="120" rx="26" fill="#14274d"/>
+  <!-- back peak (cream, subtle) -->
+  <path d="M18 88 L52 30 L70 58 L60 88 Z" fill="#fbf6ee" opacity="0.35"/>
+  <!-- front peak (orange) -->
+  <path d="M34 92 L66 34 L98 92 Z" fill="#e8722c"/>
+  <path d="M66 34 L80 58 L72 60 L84 66 L62 66 Z" fill="#fbf6ee" opacity="0.9"/>
+  <!-- checkmark / ascent path, cream, over the base -->
+  <path d="M26 78 L46 96 L94 40" stroke="#fbf6ee" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

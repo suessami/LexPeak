@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+:root {
+  --brand-navy: #14274d;
+  --brand-orange: #e8722c;
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  background: #f5f6fa;
+  color: #1c1c28;
+}
