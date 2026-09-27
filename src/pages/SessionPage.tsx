@@ -12,6 +12,7 @@ import LearnFlow from "../components/LearnFlow";
 import QuizFlow from "../components/QuizFlow";
 import WordFinder from "../components/WordFinder";
 import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
+import PassageStage from "../components/PassageStage";
 import { LexFox } from "../components/Brand";
 
 type Stage =
@@ -19,6 +20,7 @@ type Stage =
   | "quiz"
   | "wordFinder"
   | "defineQuiz"
+  | "passage"
   | "unitResult"
   | "milestone"
   | "reviewIntro"
@@ -34,6 +36,7 @@ export default function SessionPage({
 }) {
   const [stage, setStage] = useState<Stage>("learn");
   const [clozeScore, setClozeScore] = useState({ correct: 0, total: 0 });
+  const [defineScore, setDefineScore] = useState({ correct: 0, total: 0 });
   const [unitScore, setUnitScore] = useState({ correct: 0, total: 0 });
   const [reviewScore, setReviewScore] = useState({ correct: 0, total: 0 });
 
@@ -70,9 +73,14 @@ export default function SessionPage({
   }
 
   function handleDefineQuizComplete(correct: number, total: number) {
+    setDefineScore({ correct, total });
+    setStage("passage");
+  }
+
+  function handlePassageComplete(correct: number, total: number) {
     const combined = {
-      correct: clozeScore.correct + correct,
-      total: clozeScore.total + total,
+      correct: clozeScore.correct + defineScore.correct + correct,
+      total: clozeScore.total + defineScore.total + total,
     };
     markUnitComplete(unitNo, combined.correct, combined.total);
     logProgress("unit", unitNo, combined.correct, combined.total);
@@ -121,6 +129,14 @@ export default function SessionPage({
         <DefinitionQuizFlow
           words={unitWords}
           onComplete={handleDefineQuizComplete}
+        />
+      )}
+
+      {stage === "passage" && (
+        <PassageStage
+          words={unitWords}
+          pool={distractorPool}
+          onComplete={handlePassageComplete}
         />
       )}
 
