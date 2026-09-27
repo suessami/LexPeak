@@ -11,15 +11,20 @@ export default function StageIntro({
   body,
   buttonLabel,
   onContinue,
+  image,
 }: {
   eyebrow: string;
   title: string;
   body: string;
   buttonLabel: string;
   onContinue: () => void;
+  image?: string;
 }) {
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-8 flex flex-col items-center gap-3 text-center">
+      {image && (
+        <img src={image} alt="" className="w-20 h-auto object-contain mb-1" />
+      )}
       <span className="text-xs uppercase tracking-wide font-medium text-[#e8722c]">
         {eyebrow}
       </span>

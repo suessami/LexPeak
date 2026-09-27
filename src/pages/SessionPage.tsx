@@ -19,8 +19,11 @@ import { getReviewPassage } from "../data/reviewPassages";
 import StageIntro from "../components/StageIntro";
 import { formatHeadword } from "../data/idiom";
 import type { WordItem } from "../data/types";
-import duoCelebrate from "../assets/mascot/duo-celebrate.webp";
-import duoThumbsup from "../assets/mascot/duo-thumbsup.webp";
+import peakPoint from "../assets/mascot/peak-point.webp";
+import peakThink from "../assets/mascot/peak-think.webp";
+import peakOk from "../assets/mascot/peak-ok.webp";
+import stickerNiceWork from "../assets/mascot/sticker-nicework.webp";
+import stickerSmallSteps from "../assets/mascot/sticker-smallsteps.webp";
 
 export type Stage =
   | "learn"
@@ -209,6 +212,7 @@ export default function SessionPage({
 
       {stage === "buildIntro" && (
         <StageIntro
+          image={peakPoint}
           eyebrow="Up Next"
           title="Build"
           body="Quick multiple choice — let's build these words into memory."
@@ -223,6 +227,7 @@ export default function SessionPage({
 
       {stage === "practiceIntro" && (
         <StageIntro
+          image={peakPoint}
           eyebrow="Up Next"
           title="Practice"
           body="Find the matching word for each clue."
@@ -244,6 +249,7 @@ export default function SessionPage({
 
       {stage === "challengeIntro" && (
         <StageIntro
+          image={peakPoint}
           eyebrow="Up Next"
           title="Challenge"
           body="Flip it around — pick the word that matches the definition."
@@ -261,6 +267,7 @@ export default function SessionPage({
 
       {stage === "winIntro" && (
         <StageIntro
+          image={peakPoint}
           eyebrow="Last Stretch"
           title="Win"
           body="One short passage — fill in the blanks to finish the unit."
@@ -279,6 +286,7 @@ export default function SessionPage({
 
       {stage === "recapIntro" && (
         <StageIntro
+          image={peakThink}
           eyebrow="Before You Go"
           title="Quick Recap"
           body={`Let's make sure ${recapWords.length} tricky ${
@@ -298,7 +306,7 @@ export default function SessionPage({
           title="Solid work!"
           correct={unitScore.correct}
           total={unitScore.total}
-          image={duoThumbsup}
+          sticker={stickerNiceWork}
           buttonLabel={
             milestone ? "Continue" : review ? "Continue to Review" : "Home"
           }
@@ -308,8 +316,8 @@ export default function SessionPage({
 
       {stage === "milestone" && milestone && (
         <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-8 flex flex-col items-center gap-4 text-center">
-          {milestone.showFox ? (
-            <img src={duoCelebrate} alt="" className="w-28 h-auto object-contain" />
+          {milestone.image ? (
+            <img src={milestone.image} alt="" className="w-32 h-auto object-contain" />
           ) : (
             <span className="text-5xl">{milestone.emoji}</span>
           )}
@@ -350,6 +358,7 @@ export default function SessionPage({
 
       {stage === "reviewPassageIntro" && review && (
         <StageIntro
+          image={peakPoint}
           eyebrow="Review Challenge"
           title="Cloze Test"
           body="One more passage — read along and fill in the blanks that fit."
@@ -371,7 +380,7 @@ export default function SessionPage({
           title="Nice session!"
           correct={reviewScore.correct}
           total={reviewScore.total}
-          image={duoThumbsup}
+          sticker={stickerSmallSteps}
           buttonLabel="Home"
           onNext={onExit}
         />
@@ -393,11 +402,14 @@ function WarmupSummary({
 
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span>Warm-up Recap</span>
-        <span className="uppercase tracking-wide font-medium text-[#14274d]">
-          How'd You Guess?
-        </span>
+      <div className="flex items-center gap-3">
+        <img src={peakOk} alt="" className="w-12 h-12 object-contain shrink-0" />
+        <div className="flex items-center justify-between flex-1 text-xs text-slate-400">
+          <span>Warm-up Recap</span>
+          <span className="uppercase tracking-wide font-medium text-[#14274d]">
+            How'd You Guess?
+          </span>
+        </div>
       </div>
 
       <table className="w-full text-sm border-collapse">
@@ -449,6 +461,7 @@ function ResultCard({
   buttonLabel,
   onNext,
   image,
+  sticker,
 }: {
   title: string;
   correct: number;
@@ -456,13 +469,22 @@ function ResultCard({
   buttonLabel: string;
   onNext: () => void;
   image?: string;
+  /** A duo pose with its own caption baked in — shown big, and replaces
+   *  the plain title text since the sticker already says it. */
+  sticker?: string;
 }) {
   return (
     <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4 text-center">
-      {image && (
-        <img src={image} alt="" className="w-20 h-auto object-contain mx-auto" />
+      {sticker ? (
+        <img src={sticker} alt={title} className="w-44 h-auto object-contain mx-auto" />
+      ) : (
+        <>
+          {image && (
+            <img src={image} alt="" className="w-20 h-auto object-contain mx-auto" />
+          )}
+          <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+        </>
       )}
-      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
       <p className="text-3xl font-bold text-[#14274d]">
         {correct} / {total}
       </p>

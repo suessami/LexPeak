@@ -5,6 +5,7 @@ import { pickDistractors, shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
+import peakThink from "../assets/mascot/peak-think.webp";
 
 /**
  * Warm-up card, "predict" variant (sample / not yet the default).
@@ -103,7 +104,10 @@ export default function WordCardPredict({
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1">
+        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1 flex items-center gap-1.5">
+          {!selectedId && (
+            <img src={peakThink} alt="" className="w-5 h-5 object-contain" />
+          )}
           {selectedId ? "Meaning" : "What do you think this means?"}
         </p>
         <div className="flex flex-col gap-2">

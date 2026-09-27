@@ -1,3 +1,5 @@
+import lexStop from "../assets/mascot/lex-stop.webp";
+
 /**
  * Anti-guessing gate, ported from 문단속's TooFastModal: if a student taps an
  * answer within MIN_TIME_MS of the question appearing, the tap is rejected
@@ -20,7 +22,11 @@ export default function TooFastModal({
       aria-modal="true"
     >
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-slate-200">
-        <div className="text-4xl mb-3">🤔</div>
+        <img
+          src={lexStop}
+          alt=""
+          className="w-24 h-auto object-contain mx-auto mb-3"
+        />
         <h3 className="text-lg font-bold text-[#14274d] mb-2">
           Whoa, slow down!
         </h3>
