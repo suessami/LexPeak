@@ -9,6 +9,7 @@ import { markUnitComplete, markReviewComplete } from "../data/progress";
 import { getMilestone } from "../data/milestones";
 import { logProgress } from "../data/cloudSync";
 import LearnFlow from "../components/LearnFlow";
+import LearnFlowPredict from "../components/LearnFlowPredict";
 import QuizFlow from "../components/QuizFlow";
 import WordFinder from "../components/WordFinder";
 import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
@@ -44,6 +45,11 @@ export default function SessionPage({
   onExit: () => void;
 }) {
   const [stage, setStage] = useState<Stage>("learn");
+  // Sample/experiment: try the "predict the meaning" Warm-up card instead of
+  // the default reveal-it-all one. Opt-in via URL so it doesn't change what
+  // other students see until it's decided on.
+  const usePredictWarmup =
+    new URLSearchParams(window.location.search).get("warmup") === "predict";
   const [clozeScore, setClozeScore] = useState({ correct: 0, total: 0 });
   const [defineScore, setDefineScore] = useState({ correct: 0, total: 0 });
   const [unitScore, setUnitScore] = useState({ correct: 0, total: 0 });
@@ -141,7 +147,15 @@ export default function SessionPage({
         <span className="text-sm text-slate-500">Unit {unitNo}</span>
       </div>
 
-      {stage === "learn" && (
+      {stage === "learn" && usePredictWarmup && (
+        <LearnFlowPredict
+          words={unitWords}
+          pool={distractorPool}
+          onDone={() => setStage("buildIntro")}
+        />
+      )}
+
+      {stage === "learn" && !usePredictWarmup && (
         <LearnFlow words={unitWords} onDone={() => setStage("buildIntro")} />
       )}
 
