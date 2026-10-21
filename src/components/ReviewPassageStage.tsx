@@ -6,6 +6,7 @@ import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword, splitIdiomSurface } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
+import MeaningPopup from "./MeaningPopup";
 
 const MAX_ATTEMPTS = 2;
 
@@ -153,7 +154,14 @@ export default function ReviewPassageStage({
   const [firstTryCorrect, setFirstTryCorrect] = useState<Set<string>>(new Set());
   const [forcedIds, setForcedIds] = useState<Set<string>>(new Set());
   const [tooFast, setTooFast] = useState(false);
+  const [popup, setPopup] = useState<{ id: string; key: number } | null>(null);
   const startRef = useRef(Date.now());
+
+  function showMeaning(id: string) {
+    const key = Date.now();
+    setPopup({ id, key });
+    setTimeout(() => setPopup((p) => (p?.key === key ? null : p)), 1800);
+  }
 
   const usedTileIds = new Set(Object.values(filled).filter(Boolean) as string[]);
   const bankTiles = tiles.filter((t) => !usedTileIds.has(t.id));
@@ -187,7 +195,7 @@ export default function ReviewPassageStage({
     setActiveBlank(nextEmpty ?? null);
     setAttemptCount(0);
     if (!nextEmpty) {
-      setTimeout(() => onComplete(correctCount, blankIds.length), 500);
+      setTimeout(() => onComplete(correctCount, blankIds.length), 1800);
     }
   }
 
@@ -209,6 +217,7 @@ export default function ReviewPassageStage({
       setFilled(updatedFilled);
       if (wasFirstTry) setFirstTryCorrect(updatedFirstTry);
       setWrongTileId(null);
+      showMeaning(activeBlank);
       advanceToNext(updatedFilled, updatedFirstTry.size);
     } else {
       const nextAttempts = attemptCount + 1;
@@ -224,6 +233,7 @@ export default function ReviewPassageStage({
           setForcedIds((s) => new Set(s).add(revealedId));
           setRevealBlankId(null);
           setLocked(false);
+          showMeaning(revealedId);
           advanceToNext(updatedFilled, correctCountSoFar);
         }, 650);
       } else {
@@ -283,7 +293,7 @@ export default function ReviewPassageStage({
                   key={sIdx}
                   onClick={() => selectBlank(id)}
                   disabled={locked || isForced}
-                  className={`inline-block mx-1 px-2 py-0.5 rounded-lg border font-medium ${
+                  className={`relative inline-block mx-1 px-2 py-0.5 rounded-lg border font-medium ${
                     isRevealing
                       ? "border-green-500 bg-green-50 text-green-700"
                       : filledId
@@ -301,6 +311,9 @@ export default function ReviewPassageStage({
                     "___"
                   ) : (
                     "______"
+                  )}
+                  {popup?.id === id && wordItem && (
+                    <MeaningPopup key={popup.key} text={wordItem.meaningKo} />
                   )}
                 </button>
               );

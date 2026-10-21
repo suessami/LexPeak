@@ -5,6 +5,7 @@ import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword, splitIdiomSurface } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
+import MeaningPopup from "./MeaningPopup";
 
 const MAX_ATTEMPTS = 2;
 
@@ -90,7 +91,16 @@ export default function PassageStage({
   const [firstTryCorrect, setFirstTryCorrect] = useState<Set<string>>(new Set());
   const [forcedIds, setForcedIds] = useState<Set<string>>(new Set());
   const [tooFast, setTooFast] = useState(false);
+  // Blank whose Korean meaning is currently popping up (keyed so the same
+  // blank re-triggers the animation if it's ever refilled).
+  const [popup, setPopup] = useState<{ id: string; key: number } | null>(null);
   const startRef = useRef(Date.now());
+
+  function showMeaning(id: string) {
+    const key = Date.now();
+    setPopup({ id, key });
+    setTimeout(() => setPopup((p) => (p?.key === key ? null : p)), 1800);
+  }
 
   const usedTileIds = new Set(Object.values(filled).filter(Boolean) as string[]);
   const bankTiles = tiles.filter((t) => !usedTileIds.has(t.id));
@@ -131,7 +141,7 @@ export default function PassageStage({
       const wrongIds = blanks.map((b) => b.id).filter((id) => !updatedFirstTry.has(id));
       setTimeout(
         () => onComplete(updatedFirstTry.size, blanks.length, wrongIds),
-        500,
+        1800,
       );
     }
   }
@@ -155,6 +165,7 @@ export default function PassageStage({
       setFilled(updatedFilled);
       if (wasFirstTry) setFirstTryCorrect(updatedFirstTry);
       setWrongTileId(null);
+      showMeaning(activeBlank);
       advanceToNext(updatedFilled, updatedFirstTry);
     } else {
       const nextAttempts = attemptCount + 1;
@@ -173,6 +184,7 @@ export default function PassageStage({
           setForcedIds((s) => new Set(s).add(revealedId));
           setRevealBlankId(null);
           setLocked(false);
+          showMeaning(revealedId);
           advanceToNext(updatedFilled, firstTrySoFar);
         }, 650);
       } else {
@@ -206,7 +218,7 @@ export default function PassageStage({
               <button
                 onClick={() => selectBlank(b.id)}
                 disabled={locked || isForced}
-                className={`inline-block mx-1 px-2 py-0.5 rounded-lg border font-medium ${
+                className={`relative inline-block mx-1 px-2 py-0.5 rounded-lg border font-medium ${
                   isRevealing
                     ? "border-green-500 bg-green-50 text-green-700"
                     : filledTile
@@ -222,6 +234,12 @@ export default function PassageStage({
                   <FilledWord item={words.find((w) => w.id === filledTile.id)!} />
                 ) : (
                   "______"
+                )}
+                {popup?.id === b.id && (
+                  <MeaningPopup
+                    key={popup.key}
+                    text={words.find((w) => w.id === b.id)?.meaningKo ?? ""}
+                  />
                 )}
               </button>
               {b.after}

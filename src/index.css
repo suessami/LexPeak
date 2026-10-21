@@ -16,3 +16,14 @@ body {
   background: #f5f6fa;
   color: #1c1c28;
 }
+
+/* Korean-meaning confirm popup: pops in, holds, then fades away. */
+@keyframes meaning-pop {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(0.92); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  75% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -4px) scale(1); }
+}
+.meaning-pop {
+  animation: meaning-pop 1.8s ease-out forwards;
+}
