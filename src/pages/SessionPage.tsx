@@ -22,6 +22,8 @@ import DefinitionQuizFlow from "../components/DefinitionQuizFlow";
 import PassageStage from "../components/PassageStage";
 import ReviewPassageStage from "../components/ReviewPassageStage";
 import { getReviewPassage } from "../data/reviewPassages";
+import { getUsageChecks } from "../data/usageChecks";
+import UsageCheckStage from "../components/UsageCheckStage";
 import StageIntro from "../components/StageIntro";
 import { formatHeadword } from "../data/idiom";
 import type { WordItem } from "../data/types";
@@ -50,6 +52,8 @@ export type Stage =
   | "review"
   | "reviewPassageIntro"
   | "reviewPassage"
+  | "usageIntro"
+  | "usage"
   | "reviewRecapIntro"
   | "reviewRecap"
   | "reviewResult";
@@ -70,6 +74,7 @@ const STAGE_HEADINGS: Partial<Record<Stage, string>> = {
   review: "Review",
   reviewPassage: "Cloze Test",
   reviewRecap: "Quick Recap",
+  usage: "Use It Right",
 };
 
 /**
@@ -147,6 +152,15 @@ export default function SessionPage({
     () => (review ? getReviewPassage(review.reviewNo) : undefined),
     [review],
   );
+  const usageChecks = useMemo(
+    () => (review ? getUsageChecks(review.reviewNo) : []),
+    [review],
+  );
+  // Score/misses carried into the "Use It Right" stage, if this review has one.
+  const [preUsage, setPreUsage] = useState<{
+    score: { correct: number; total: number };
+    missed: Set<string>;
+  } | null>(null);
   const milestone = useMemo(() => getMilestone(unitNo), [unitNo]);
   const stageWords = useMemo(() => planStageWords(unitWords, unitNo), [unitWords, unitNo]);
   // Every word this session can test (today's + the mixed-in past ones).
@@ -226,6 +240,11 @@ export default function SessionPage({
   }
 
   function finishReview(combined: { correct: number; total: number }, missed: Set<string>) {
+    if (usageChecks.length > 0 && !preUsage) {
+      setPreUsage({ score: combined, missed });
+      setStage("usageIntro");
+      return;
+    }
     if (review) {
       markReviewComplete(review.reviewNo, combined.correct, combined.total);
       logProgress("review", review.reviewNo, combined.correct, combined.total);
@@ -243,6 +262,16 @@ export default function SessionPage({
       return;
     }
     finishReview({ correct, total }, new Set(wrongIds));
+  }
+
+  function handleUsageComplete(correct: number, total: number, wrongIds: string[]) {
+    if (!preUsage) return;
+    const missed = new Set(preUsage.missed);
+    wrongIds.forEach((id) => missed.add(id));
+    finishReview(
+      { correct: preUsage.score.correct + correct, total: preUsage.score.total + total },
+      missed,
+    );
   }
 
   function handleReviewPassageComplete(correct: number, total: number, wrongIds: string[]) {
@@ -464,6 +493,25 @@ export default function SessionPage({
           passage={reviewPassage}
           reviewWords={reviewWords}
           onComplete={handleReviewPassageComplete}
+        />
+      )}
+
+      {stage === "usageIntro" && (
+        <StageIntro
+          image={peakPoint}
+          eyebrow="Review Challenge"
+          title="Use It Right"
+          body="Knowing a word means knowing how it's used. For each word, pick every sentence that uses it correctly — there may be one, two, or three."
+          buttonLabel="Start"
+          onContinue={() => setStage("usage")}
+        />
+      )}
+
+      {stage === "usage" && (
+        <UsageCheckStage
+          checks={usageChecks}
+          words={reviewWords}
+          onComplete={handleUsageComplete}
         />
       )}
 
