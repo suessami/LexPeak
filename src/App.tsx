@@ -10,7 +10,8 @@ type View =
   | { name: "home" }
   | { name: "session"; unitNo: number; startAt?: Stage };
 
-const reportCode = new URLSearchParams(window.location.search).get("report");
+// Parent report: opened by a per-student secret link (?parent=<token>).
+const parentToken = new URLSearchParams(window.location.search).get("parent");
 
 export default function App() {
   const [view, setView] = useState<View>({ name: "home" });
@@ -26,8 +27,8 @@ export default function App() {
     });
   }, [hasCode]);
 
-  if (reportCode) {
-    return <ReportPage code={reportCode} />;
+  if (parentToken) {
+    return <ReportPage token={parentToken} />;
   }
 
   if (!hasCode) {

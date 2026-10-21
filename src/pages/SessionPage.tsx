@@ -225,12 +225,12 @@ export default function SessionPage({
       correct: clozeScore.correct + defineScore.correct + correct,
       total: clozeScore.total + defineScore.total + total,
     };
-    markUnitComplete(unitNo, combined.correct, combined.total);
-    logProgress("unit", unitNo, combined.correct, combined.total);
-    setUnitScore(combined);
-
     const finalMissed = new Set(missedIds);
     wrongIds.forEach((id) => finalMissed.add(id));
+    markUnitComplete(unitNo, combined.correct, combined.total);
+    logProgress("unit", unitNo, combined.correct, combined.total, [...finalMissed]);
+    setUnitScore(combined);
+
     setMissedIds(finalMissed);
     saveUnitMissed(
       unitNo,
@@ -247,7 +247,7 @@ export default function SessionPage({
     }
     if (review) {
       markReviewComplete(review.reviewNo, combined.correct, combined.total);
-      logProgress("review", review.reviewNo, combined.correct, combined.total);
+      logProgress("review", review.reviewNo, combined.correct, combined.total, [...missed]);
     }
     setReviewScore(combined);
     setReviewMissedIds(missed);

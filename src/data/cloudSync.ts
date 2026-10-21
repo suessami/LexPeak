@@ -41,6 +41,7 @@ export async function logProgress(
   refNo: number,
   correct: number,
   total: number,
+  wrongWordIds: string[] = [],
 ) {
   if (!supabase) return; // offline / no backend configured — silently skip
   try {
@@ -52,6 +53,7 @@ export async function logProgress(
       ref_no: refNo,
       correct,
       total,
+      wrong_word_ids: wrongWordIds,
     });
   } catch {
     // Never let a sync failure interrupt the learning flow.

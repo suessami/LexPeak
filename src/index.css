@@ -27,3 +27,8 @@ body {
 .meaning-pop {
   animation: meaning-pop 1.8s ease-out forwards;
 }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff; }
+}
