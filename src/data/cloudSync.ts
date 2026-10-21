@@ -57,3 +57,33 @@ export async function logProgress(
     // Never let a sync failure interrupt the learning flow.
   }
 }
+
+const RESET_SEEN_KEY = "vocabapp_reset_seen";
+
+/**
+ * Teacher-triggered reset: if the student's row has a `progress_reset_at`
+ * newer than the last reset this device applied, wipe this device's local
+ * progress (completed units/reviews, scores, missed words). Lets 쑤샘 reset
+ * a student from the server without touching their device. Returns true if
+ * a reset was applied (caller should reload so screens re-read progress).
+ */
+export async function applyRemoteReset(): Promise<boolean> {
+  const code = getStudentCode();
+  if (!supabase || !code) return false;
+  try {
+    const { data, error } = await supabase
+      .from("students")
+      .select("progress_reset_at")
+      .eq("code", code)
+      .maybeSingle();
+    const resetAt = data?.progress_reset_at as string | null | undefined;
+    if (error || !resetAt) return false;
+    const seen = localStorage.getItem(RESET_SEEN_KEY);
+    if (seen && new Date(seen) >= new Date(resetAt)) return false;
+    localStorage.removeItem("vocabapp_progress_v1");
+    localStorage.setItem(RESET_SEEN_KEY, resetAt);
+    return true;
+  } catch {
+    return false;
+  }
+}

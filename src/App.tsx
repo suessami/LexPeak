@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HomePage from "./pages/HomePage";
 import SessionPage, { type Stage } from "./pages/SessionPage";
 import ReportPage from "./pages/ReportPage";
 import CodeGate from "./pages/CodeGate";
 import { getStudentCode, clearStudentCode } from "./data/studentCode";
+import { applyRemoteReset } from "./data/cloudSync";
 
 type View =
   | { name: "home" }
@@ -14,6 +15,16 @@ const reportCode = new URLSearchParams(window.location.search).get("report");
 export default function App() {
   const [view, setView] = useState<View>({ name: "home" });
   const [hasCode, setHasCode] = useState(() => !!getStudentCode());
+
+  // Check once per load (and after logging in) whether the teacher reset
+  // this student's progress; if so, local progress was just cleared, so
+  // reload to show a fresh Home.
+  useEffect(() => {
+    if (!hasCode) return;
+    applyRemoteReset().then((didReset) => {
+      if (didReset) window.location.reload();
+    });
+  }, [hasCode]);
 
   if (reportCode) {
     return <ReportPage code={reportCode} />;
