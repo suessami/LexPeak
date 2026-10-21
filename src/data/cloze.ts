@@ -30,7 +30,14 @@ export function buildCloze(item: WordItem): ClozeParts {
 
   const before = example.slice(0, idx);
   const after = example.slice(idx + clozeSurface.length);
-  const { head, middle, tail } = splitIdiomSurface(item);
+  const parts = splitIdiomSurface(item);
+  const { middle, tail } = parts;
+  // Keep the sentence's own capitalization ("When it comes to..." at the
+  // start of a sentence), since the stored surface is lowercase.
+  const head =
+    parts.head && example[idx] && parts.head[0].toLowerCase() === example[idx].toLowerCase()
+      ? example[idx] + parts.head.slice(1)
+      : parts.head;
 
   if (tail) {
     return {

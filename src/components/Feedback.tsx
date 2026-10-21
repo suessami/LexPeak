@@ -42,7 +42,7 @@ export default function Feedback({
   const label = isLast ? "Finish" : "Next Question";
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-4">
+    <div className="w-full max-w-md rounded-2xl bg-white shadow-md border border-slate-200 p-6 flex flex-col gap-5">
       <div
         className={`text-sm font-semibold ${
           wasCorrect ? "text-green-600" : "text-red-500"
@@ -58,17 +58,25 @@ export default function Feedback({
         <span className="text-sm text-slate-400 italic">{item.pos}</span>
       </div>
 
-      <div className="rounded-xl bg-[#fff1e8] border border-[#e8722c] px-4 py-3">
-        <p className="text-xs text-slate-500 mb-1">Korean meaning</p>
-        <p className="text-lg font-semibold text-slate-800">{item.meaningKo}</p>
-      </div>
+      <section className="rounded-xl bg-[#fff1e8] px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#e8722c] mb-1">
+          Korean meaning
+        </p>
+        <p className="text-xl font-bold text-[#14274d]">{item.meaningKo}</p>
+      </section>
 
-      <p className="text-slate-700 leading-relaxed">{item.definitionEn}</p>
-      {/* Big, highlighted example: this exact sentence comes back in the
-          Win passage, so students are told to actually read it. */}
-      <div className="rounded-xl border-2 border-[#14274d]/15 bg-slate-50 px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#e8722c] mb-2">
-          Remember this sentence — it'll be on your quiz
+      <section className="px-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+          English definition
+        </p>
+        <p className="text-lg leading-relaxed text-[#14274d]">{item.definitionEn}</p>
+      </section>
+
+      {/* This exact sentence comes back in the Win passage, so students are
+          told to actually read it. */}
+      <section className="rounded-xl bg-slate-100 px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+          Example <span className="text-[#e8722c]">· it'll be on your quiz</span>
         </p>
         <p className="text-lg leading-relaxed text-[#14274d]">
           {cloze.segments.map((seg, i) =>
@@ -84,7 +92,7 @@ export default function Feedback({
             ),
           )}
         </p>
-      </div>
+      </section>
 
       <button
         onClick={onNext}
