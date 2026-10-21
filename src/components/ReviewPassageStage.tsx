@@ -83,7 +83,7 @@ export default function ReviewPassageStage({
 }: {
   passage: ReviewPassage;
   reviewWords: WordItem[];
-  onComplete: (correct: number, total: number) => void;
+  onComplete: (correct: number, total: number, wrongIds: string[]) => void;
 }) {
   const wordById = useMemo(
     () => new Map(reviewWords.map((w) => [w.id, w])),
@@ -190,12 +190,13 @@ export default function ReviewPassageStage({
     setAttemptCount(0);
   }
 
-  function advanceToNext(updatedFilled: Record<string, string | null>, correctCount: number) {
+  function advanceToNext(updatedFilled: Record<string, string | null>, firstTry: Set<string>) {
     const nextEmpty = blankIds.find((id) => !updatedFilled[id]);
     setActiveBlank(nextEmpty ?? null);
     setAttemptCount(0);
     if (!nextEmpty) {
-      setTimeout(() => onComplete(correctCount, blankIds.length), 1800);
+      const wrongIds = blankIds.filter((id) => !firstTry.has(id));
+      setTimeout(() => onComplete(firstTry.size, blankIds.length, wrongIds), 1800);
     }
   }
 
@@ -218,7 +219,7 @@ export default function ReviewPassageStage({
       if (wasFirstTry) setFirstTryCorrect(updatedFirstTry);
       setWrongTileId(null);
       showMeaning(activeBlank);
-      advanceToNext(updatedFilled, updatedFirstTry.size);
+      advanceToNext(updatedFilled, updatedFirstTry);
     } else {
       const nextAttempts = attemptCount + 1;
       if (nextAttempts >= MAX_ATTEMPTS) {
@@ -226,7 +227,7 @@ export default function ReviewPassageStage({
         setWrongTileId(null);
         setRevealBlankId(activeBlank);
         const revealedId = activeBlank;
-        const correctCountSoFar = firstTryCorrect.size;
+        const firstTrySoFar = firstTryCorrect;
         setTimeout(() => {
           const updatedFilled = { ...filled, [revealedId]: revealedId };
           setFilled(updatedFilled);
@@ -234,7 +235,7 @@ export default function ReviewPassageStage({
           setRevealBlankId(null);
           setLocked(false);
           showMeaning(revealedId);
-          advanceToNext(updatedFilled, correctCountSoFar);
+          advanceToNext(updatedFilled, firstTrySoFar);
         }, 650);
       } else {
         setAttemptCount(nextAttempts);
@@ -299,7 +300,9 @@ export default function ReviewPassageStage({
                       : filledId
                         ? isForced
                           ? "border-slate-300 bg-slate-50 text-slate-500"
-                          : "border-green-500 bg-green-50 text-green-700"
+                          : firstTryCorrect.has(id)
+                            ? "border-green-500 bg-green-50 text-green-700"
+                            : "border-amber-400 bg-amber-50 text-amber-700"
                         : isActive
                           ? "border-[#e8722c] bg-orange-50 text-slate-400"
                           : "border-slate-300 border-dashed text-slate-400"

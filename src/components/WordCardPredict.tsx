@@ -87,7 +87,7 @@ export default function WordCardPredict({
         <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1">
           Example
         </p>
-        <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-[#14274d] leading-relaxed">
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-base text-[#14274d] leading-relaxed">
           {cloze.segments.map((seg, i) =>
             seg.blank ? (
               <span

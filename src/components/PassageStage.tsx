@@ -224,7 +224,9 @@ export default function PassageStage({
                     : filledTile
                       ? isForced
                         ? "border-slate-300 bg-slate-50 text-slate-500"
-                        : "border-green-500 bg-green-50 text-green-700"
+                        : firstTryCorrect.has(b.id)
+                          ? "border-green-500 bg-green-50 text-green-700"
+                          : "border-amber-400 bg-amber-50 text-amber-700"
                       : isActive
                         ? "border-[#e8722c] bg-orange-50 text-slate-400"
                         : "border-slate-300 border-dashed text-slate-400"

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { WordItem } from "../data/types";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
+import { buildCloze } from "../data/cloze";
 
 export default function Feedback({
   item,
@@ -35,6 +36,7 @@ export default function Feedback({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id, minTimeMs]);
 
+  const cloze = useMemo(() => buildCloze(item), [item]);
   const ready = remainingMs <= 0;
   const secondsLeft = Math.ceil(remainingMs / 1000);
   const label = isLast ? "Finish" : "Next Question";
@@ -62,7 +64,27 @@ export default function Feedback({
       </div>
 
       <p className="text-slate-700 leading-relaxed">{item.definitionEn}</p>
-      <p className="text-sm text-slate-500 leading-relaxed">{item.example}</p>
+      {/* Big, highlighted example: this exact sentence comes back in the
+          Win passage, so students are told to actually read it. */}
+      <div className="rounded-xl border-2 border-[#14274d]/15 bg-slate-50 px-4 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#e8722c] mb-2">
+          Remember this sentence — it'll be on your quiz
+        </p>
+        <p className="text-lg leading-relaxed text-[#14274d]">
+          {cloze.segments.map((seg, i) =>
+            seg.blank ? (
+              <span
+                key={i}
+                className="font-bold text-[#e8722c] underline decoration-2 underline-offset-4"
+              >
+                {seg.text}
+              </span>
+            ) : (
+              <span key={i}>{seg.text}</span>
+            ),
+          )}
+        </p>
+      </div>
 
       <button
         onClick={onNext}

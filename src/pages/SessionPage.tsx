@@ -4,8 +4,14 @@ import {
   getReviewByAfterUnit,
   getReviewWords,
   getDistractorPool,
+  shuffle,
 } from "../data/course";
-import { markUnitComplete, markReviewComplete } from "../data/progress";
+import {
+  markUnitComplete,
+  markReviewComplete,
+  saveUnitMissed,
+  getUnitMissed,
+} from "../data/progress";
 import { getMilestone } from "../data/milestones";
 import { logProgress } from "../data/cloudSync";
 import LearnFlow from "../components/LearnFlow";
@@ -44,6 +50,8 @@ export type Stage =
   | "review"
   | "reviewPassageIntro"
   | "reviewPassage"
+  | "reviewRecapIntro"
+  | "reviewRecap"
   | "reviewResult";
 
 // Page-level heading shown between the Home/Unit row and the stage's own
@@ -61,7 +69,41 @@ const STAGE_HEADINGS: Partial<Record<Stage, string>> = {
   recap: "Quick Recap",
   review: "Review",
   reviewPassage: "Cloze Test",
+  reviewRecap: "Quick Recap",
 };
+
+/**
+ * Splits a stage's 5 question slots between today's words and a few words
+ * from the previous 2 units. Without this, every answer was a today-word, so
+ * "I saw this one yesterday → not the answer" worked 100% of the time and
+ * students could pass by elimination without reading. Today's words rotate
+ * out (Build drops 1, Practice/Challenge drop 2 each, different ones) so
+ * every today-word is still tested in at least two of those stages, plus
+ * all of them in Win.
+ */
+function planStageWords(unitWords: WordItem[], unitNo: number) {
+  const prior: WordItem[] = [];
+  for (let u = Math.max(1, unitNo - 2); u < unitNo; u++) prior.push(...getUnitWords(u));
+  if (prior.length === 0) {
+    return { build: unitWords, practice: unitWords, challenge: unitWords, win: unitWords };
+  }
+  // Words missed last time come back first.
+  const missed = new Set<string>();
+  for (let u = Math.max(1, unitNo - 2); u < unitNo; u++) getUnitMissed(u).forEach((id) => missed.add(id));
+  const spiral = [
+    ...shuffle(prior.filter((w) => missed.has(w.id))),
+    ...shuffle(prior.filter((w) => !missed.has(w.id))),
+  ];
+  const take = (i: number) => spiral[i % spiral.length];
+  const t = shuffle(unitWords);
+  const without = (drop: WordItem[]) => t.filter((w) => !drop.includes(w));
+  return {
+    build: shuffle([...without([t[0]]), take(0)]),
+    practice: shuffle([...without([t[1], t[2]]), take(1), take(2)]),
+    challenge: shuffle([...without([t[3], t[4]]), take(3), take(4)]),
+    win: shuffle([...unitWords, take(5)]),
+  };
+}
 
 export default function SessionPage({
   unitNo,
@@ -106,9 +148,23 @@ export default function SessionPage({
     [review],
   );
   const milestone = useMemo(() => getMilestone(unitNo), [unitNo]);
+  const stageWords = useMemo(() => planStageWords(unitWords, unitNo), [unitWords, unitNo]);
+  // Every word this session can test (today's + the mixed-in past ones).
+  const sessionWords = useMemo(() => {
+    const byId = new Map<string, WordItem>();
+    [...unitWords, ...stageWords.build, ...stageWords.practice, ...stageWords.challenge, ...stageWords.win]
+      .forEach((w) => byId.set(w.id, w));
+    return [...byId.values()];
+  }, [unitWords, stageWords]);
   const recapWords = useMemo(
-    () => unitWords.filter((w) => missedIds.has(w.id)),
-    [unitWords, missedIds],
+    () => sessionWords.filter((w) => missedIds.has(w.id)),
+    [sessionWords, missedIds],
+  );
+  // Review: words missed in the review quiz or cloze test.
+  const [reviewMissedIds, setReviewMissedIds] = useState<Set<string>>(new Set());
+  const reviewRecapWords = useMemo(
+    () => reviewWords.filter((w) => reviewMissedIds.has(w.id)),
+    [reviewWords, reviewMissedIds],
   );
 
   function addMissed(ids: string[]) {
@@ -162,34 +218,41 @@ export default function SessionPage({
     const finalMissed = new Set(missedIds);
     wrongIds.forEach((id) => finalMissed.add(id));
     setMissedIds(finalMissed);
+    saveUnitMissed(
+      unitNo,
+      unitWords.filter((w) => finalMissed.has(w.id)).map((w) => w.id),
+    );
     setStage(finalMissed.size > 0 ? "recapIntro" : "unitResult");
   }
 
-  function handleReviewQuizComplete(correct: number, total: number) {
-    if (reviewPassage) {
-      setReviewQuizScore({ correct, total });
-      setStage("reviewPassageIntro");
-      return;
-    }
-    if (review) {
-      markReviewComplete(review.reviewNo, correct, total);
-      logProgress("review", review.reviewNo, correct, total);
-    }
-    setReviewScore({ correct, total });
-    setStage("reviewResult");
-  }
-
-  function handleReviewPassageComplete(correct: number, total: number) {
-    const combined = {
-      correct: reviewQuizScore.correct + correct,
-      total: reviewQuizScore.total + total,
-    };
+  function finishReview(combined: { correct: number; total: number }, missed: Set<string>) {
     if (review) {
       markReviewComplete(review.reviewNo, combined.correct, combined.total);
       logProgress("review", review.reviewNo, combined.correct, combined.total);
     }
     setReviewScore(combined);
-    setStage("reviewResult");
+    setReviewMissedIds(missed);
+    setStage(missed.size > 0 ? "reviewRecapIntro" : "reviewResult");
+  }
+
+  function handleReviewQuizComplete(correct: number, total: number, wrongIds: string[]) {
+    setReviewMissedIds(new Set(wrongIds));
+    if (reviewPassage) {
+      setReviewQuizScore({ correct, total });
+      setStage("reviewPassageIntro");
+      return;
+    }
+    finishReview({ correct, total }, new Set(wrongIds));
+  }
+
+  function handleReviewPassageComplete(correct: number, total: number, wrongIds: string[]) {
+    const combined = {
+      correct: reviewQuizScore.correct + correct,
+      total: reviewQuizScore.total + total,
+    };
+    const missed = new Set(reviewMissedIds);
+    wrongIds.forEach((id) => missed.add(id));
+    finishReview(combined, missed);
   }
 
   return (
@@ -245,7 +308,11 @@ export default function SessionPage({
       )}
 
       {stage === "quiz" && (
-        <QuizFlow words={unitWords} onComplete={handleClozeQuizComplete} />
+        <QuizFlow
+          words={stageWords.build}
+          pool={distractorPool}
+          onComplete={handleClozeQuizComplete}
+        />
       )}
 
       {stage === "practiceIntro" && (
@@ -261,7 +328,7 @@ export default function SessionPage({
 
       {stage === "wordFinder" && (
         <WordFinder
-          words={unitWords}
+          words={stageWords.practice}
           pool={distractorPool}
           onDone={(wrongIds) => {
             addMissed(wrongIds);
@@ -283,7 +350,8 @@ export default function SessionPage({
 
       {stage === "defineQuiz" && (
         <DefinitionQuizFlow
-          words={unitWords}
+          words={stageWords.challenge}
+          pool={distractorPool}
           onComplete={handleDefineQuizComplete}
         />
       )}
@@ -301,7 +369,7 @@ export default function SessionPage({
 
       {stage === "passage" && (
         <PassageStage
-          words={unitWords}
+          words={stageWords.win}
           pool={distractorPool}
           onComplete={handlePassageComplete}
         />
@@ -330,8 +398,9 @@ export default function SessionPage({
           correct={unitScore.correct}
           total={unitScore.total}
           sticker={stickerNiceWork}
+          missed={recapWords}
           buttonLabel={
-            milestone ? "Continue" : review ? "Continue to Review" : "Home"
+            milestone ? "Continue" : review ? "Continue to Review" : "Finish"
           }
           onNext={goPastUnitResult}
         />
@@ -398,13 +467,31 @@ export default function SessionPage({
         />
       )}
 
+      {stage === "reviewRecapIntro" && (
+        <StageIntro
+          image={peakThink}
+          eyebrow="Before You Go"
+          title="Quick Recap"
+          body={`Let's go over the ${reviewRecapWords.length} ${
+            reviewRecapWords.length === 1 ? "word" : "words"
+          } you missed once more.`}
+          buttonLabel="Start Recap"
+          onContinue={() => setStage("reviewRecap")}
+        />
+      )}
+
+      {stage === "reviewRecap" && (
+        <QuizFlow words={reviewRecapWords} onComplete={() => setStage("reviewResult")} />
+      )}
+
       {stage === "reviewResult" && (
         <ResultCard
           title="Nice session!"
           correct={reviewScore.correct}
           total={reviewScore.total}
           sticker={stickerSmallSteps}
-          buttonLabel="Home"
+          missed={reviewRecapWords}
+          buttonLabel="Finish"
           onNext={onExit}
         />
       )}
@@ -485,7 +572,10 @@ function ResultCard({
   onNext,
   image,
   sticker,
+  missed = [],
 }: {
+  /** Words missed this session — listed so the student sees them once more before leaving. */
+  missed?: WordItem[];
   title: string;
   correct: number;
   total: number;
@@ -511,6 +601,24 @@ function ResultCard({
       <p className="text-3xl font-bold text-[#14274d]">
         {correct} / {total}
       </p>
+      {missed.length > 0 && (
+        <div className="text-left border-t border-slate-100 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#e8722c] mb-2">
+            Words to remember
+          </p>
+          <ul className="flex flex-col gap-2">
+            {missed.map((w) => (
+              <li key={w.id} className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="font-bold text-[#14274d]">{formatHeadword(w.word)}</span>
+                  <span className="text-sm text-slate-600">{w.meaningKo}</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">{w.definitionEn}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <button
         onClick={onNext}
         className="rounded-xl bg-[#14274d] text-white font-medium py-3 hover:opacity-90 transition"

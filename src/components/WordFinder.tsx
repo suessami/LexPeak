@@ -45,6 +45,8 @@ export default function WordFinder({
   const [clueIndex, setClueIndex] = useState(0);
   const [attemptCount, setAttemptCount] = useState(0);
   const [foundIds, setFoundIds] = useState<Set<string>>(new Set());
+  // Found, but not on the very first tap of round 1 — shown amber, not green.
+  const [lateIds, setLateIds] = useState<Set<string>>(new Set());
   const [wrongId, setWrongId] = useState<string | null>(null);
   const [revealId, setRevealId] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
@@ -109,6 +111,9 @@ export default function WordFinder({
       const nextFound = new Set(foundIds);
       nextFound.add(tile.id);
       setFoundIds(nextFound);
+      if (attemptCount > 0 || roundNum > 1) {
+        setLateIds((s) => new Set(s).add(tile.id));
+      }
       setWrongId(null);
       goToNext(nextFound, roundWrongs, firstAttemptWrongIds);
     } else {
@@ -176,7 +181,10 @@ export default function WordFinder({
           const wrong = wrongId === tile.id;
           const revealed = revealId === tile.id;
           let style = "border-slate-200 hover:border-[#14274d] hover:bg-orange-50";
-          if (found) style = "border-green-500 bg-green-50 opacity-50";
+          if (found)
+            style = lateIds.has(tile.id)
+              ? "border-amber-400 bg-amber-50 opacity-60"
+              : "border-green-500 bg-green-50 opacity-50";
           else if (revealed) style = "border-green-500 bg-green-50";
           else if (wrong) style = "border-red-400 bg-red-50";
           return (

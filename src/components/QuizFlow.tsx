@@ -16,9 +16,12 @@ const MAX_ROUNDS = 3;
  */
 export default function QuizFlow({
   words,
+  pool,
   onComplete,
 }: {
   words: WordItem[];
+  /** Shared distractor pool for every question; defaults to each word's own unit window. */
+  pool?: WordItem[];
   onComplete: (correct: number, total: number, wrongIds: string[]) => void;
 }) {
   const [roundQueue, setRoundQueue] = useState<WordItem[]>(() => shuffle(words));
@@ -74,7 +77,7 @@ export default function QuizFlow({
     return (
       <QuizQuestion
         answer={current}
-        pool={getDistractorPool(current.unitNo)}
+        pool={pool ?? getDistractorPool(current.unitNo)}
         index={index}
         total={roundQueue.length}
         roundLabel={roundLabel}

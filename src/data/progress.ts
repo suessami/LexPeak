@@ -8,6 +8,8 @@ export interface ProgressState {
   /** unitNo -> { correct, total } last quiz result */
   unitScores: Record<number, { correct: number; total: number }>;
   reviewScores: Record<number, { correct: number; total: number }>;
+  /** unitNo -> word ids missed (not right first try) in that unit */
+  missedWords: Record<number, string[]>;
 }
 
 function emptyState(): ProgressState {
@@ -16,6 +18,7 @@ function emptyState(): ProgressState {
     completedReviews: {},
     unitScores: {},
     reviewScores: {},
+    missedWords: {},
   };
 }
 
@@ -59,4 +62,14 @@ export function getNextUnit(totalUnits: number): number | null {
     if (!state.completedUnits[u]) return u;
   }
   return null;
+}
+
+export function saveUnitMissed(unitNo: number, ids: string[]) {
+  const state = loadProgress();
+  state.missedWords[unitNo] = ids;
+  saveProgress(state);
+}
+
+export function getUnitMissed(unitNo: number): string[] {
+  return loadProgress().missedWords[unitNo] ?? [];
 }

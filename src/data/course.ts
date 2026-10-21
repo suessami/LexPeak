@@ -71,9 +71,25 @@ export function pickDistractors(
   pool: WordItem[],
   count: number,
 ): WordItem[] {
+  // Same part of speech first, so a wrong option can't be ruled out just by
+  // its shape (e.g. a phrase offered for a noun slot); other words only
+  // fill in if the pool runs short of same-POS candidates.
   const candidates = pool.filter((w) => w.id !== answerWord.id);
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  const same = shuffle(candidates.filter((w) => w.pos === answerWord.pos));
+  // A 3-unit window often holds only one or two words of a given part of
+  // speech, so if it runs short, borrow same-POS words from a few earlier
+  // (already studied) units before falling back to other parts of speech.
+  if (same.length < count) {
+    const seen = new Set([answerWord.id, ...candidates.map((w) => w.id)]);
+    const minUnit = Math.min(...pool.map((w) => w.unitNo), answerWord.unitNo);
+    const extra: WordItem[] = [];
+    for (let u = Math.max(1, minUnit - 6); u < minUnit; u++) {
+      extra.push(...getUnitWords(u).filter((w) => w.pos === answerWord.pos && !seen.has(w.id)));
+    }
+    same.push(...shuffle(extra).slice(0, count - same.length));
+  }
+  const other = shuffle(candidates.filter((w) => w.pos !== answerWord.pos));
+  return [...same, ...other].slice(0, count);
 }
 
 export function shuffle<T>(arr: T[]): T[] {
