@@ -4,7 +4,7 @@ import SessionPage, { type Stage } from "./pages/SessionPage";
 import ReportPage from "./pages/ReportPage";
 import CodeGate from "./pages/CodeGate";
 import { getStudentCode, clearStudentCode } from "./data/studentCode";
-import { applyRemoteReset } from "./data/cloudSync";
+import { applyRemoteReset, syncProgressFromServer } from "./data/cloudSync";
 
 type View =
   | { name: "home" }
@@ -22,9 +22,11 @@ export default function App() {
   // reload to show a fresh Home.
   useEffect(() => {
     if (!hasCode) return;
-    applyRemoteReset().then((didReset) => {
-      if (didReset) window.location.reload();
-    });
+    (async () => {
+      const didReset = await applyRemoteReset();
+      const didSync = await syncProgressFromServer();
+      if (didReset || didSync) window.location.reload();
+    })();
   }, [hasCode]);
 
   if (parentToken) {

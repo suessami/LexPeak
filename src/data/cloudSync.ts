@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { getStudentCode } from "./studentCode";
+import { loadProgress, saveProgress } from "./progress";
 
 // Cache the student's row id (uuid) per code so we don't look it up on every
 // single write. Cleared whenever the code changes (new session/device).
@@ -80,11 +81,54 @@ export async function applyRemoteReset(): Promise<boolean> {
       .maybeSingle();
     const resetAt = data?.progress_reset_at as string | null | undefined;
     if (error || !resetAt) return false;
-    const seen = localStorage.getItem(RESET_SEEN_KEY);
-    if (seen && new Date(seen) >= new Date(resetAt)) return false;
+    // Exact string match: the same reset is never applied twice, even on
+    // browsers that can't parse microsecond timestamps as dates.
+    if (localStorage.getItem(RESET_SEEN_KEY) === resetAt) return false;
     localStorage.removeItem("vocabapp_progress_v1");
     localStorage.setItem(RESET_SEEN_KEY, resetAt);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+type ServerEvent = {
+  kind: "unit" | "review";
+  ref_no: number;
+  correct: number;
+  total: number;
+  wrong_word_ids: string[] | null;
+};
+
+/**
+ * Progress used to live only in this browser, so a cleared browser or a
+ * second device started back at Unit 1 even though the server had the
+ * records. On load, pull this student's server events (only those after
+ * any teacher reset) and merge them into local progress. Returns true if
+ * anything new was added (caller reloads so Home re-reads progress).
+ */
+export async function syncProgressFromServer(): Promise<boolean> {
+  const code = getStudentCode();
+  if (!supabase || !code) return false;
+  try {
+    const { data, error } = await supabase.rpc("get_student_progress", { p_code: code });
+    if (error || !Array.isArray(data) || data.length === 0) return false;
+    const state = loadProgress();
+    let changed = false;
+    for (const e of data as ServerEvent[]) {
+      if (e.kind === "unit") {
+        if (!state.completedUnits[e.ref_no]) changed = true;
+        state.completedUnits[e.ref_no] = true;
+        state.unitScores[e.ref_no] = { correct: e.correct, total: e.total };
+        state.missedWords[e.ref_no] = e.wrong_word_ids ?? [];
+      } else {
+        if (!state.completedReviews[e.ref_no]) changed = true;
+        state.completedReviews[e.ref_no] = true;
+        state.reviewScores[e.ref_no] = { correct: e.correct, total: e.total };
+      }
+    }
+    if (changed) saveProgress(state);
+    return changed;
   } catch {
     return false;
   }
