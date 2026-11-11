@@ -1,5 +1,6 @@
 import type { WordItem } from "../data/types";
 import { formatHeadword } from "../data/idiom";
+import SpeakButton from "./SpeakButton";
 
 export default function WordCard({
   item,
@@ -22,11 +23,12 @@ export default function WordCard({
       </div>
 
       <div>
-        <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-2xl font-bold text-[#e8722c]">
             {formatHeadword(item.word)}
           </h2>
           <span className="text-sm text-slate-400 italic">{item.pos}</span>
+          <SpeakButton text={item.word} label="Listen to the word" />
         </div>
       </div>
 
@@ -38,8 +40,9 @@ export default function WordCard({
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1">
+        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1 flex items-center gap-2">
           Example
+          <SpeakButton text={item.example} label="Listen to the example" size="sm" />
         </p>
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-[#14274d] leading-relaxed">
           {item.example}

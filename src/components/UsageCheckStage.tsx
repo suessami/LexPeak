@@ -5,6 +5,7 @@ import { shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
+import SpeakButton from "./SpeakButton";
 
 /**
  * "Use It Right": one word, four sentences, pick every sentence that uses
@@ -85,9 +86,10 @@ export default function UsageCheckStage({
         {index + 1} / {order.length}
       </div>
 
-      <div className="flex items-baseline gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         <h2 className="text-2xl font-bold text-[#e8722c]">{formatHeadword(word.word)}</h2>
         <span className="text-sm text-slate-400 italic">{word.pos}</span>
+        <SpeakButton text={word.word} label="Listen to the word" />
       </div>
 
       <p className="text-sm text-slate-600">

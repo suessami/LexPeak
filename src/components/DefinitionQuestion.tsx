@@ -4,6 +4,7 @@ import { pickDistractors, shuffle } from "../data/course";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
+import SpeakButton from "./SpeakButton";
 
 /**
  * Stage 3 — reverse-direction recall: show the word, pick its correct
@@ -79,11 +80,12 @@ export default function DefinitionQuestion({
         )}
       </div>
 
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-center gap-2">
         <h2 className="text-2xl font-semibold text-slate-900">
           {formatHeadword(answer.word)}
         </h2>
         <span className="text-sm text-slate-400 italic">{answer.pos}</span>
+        <SpeakButton text={answer.word} label="Listen to the word" />
       </div>
 
       <div className="flex flex-col gap-2">

@@ -3,6 +3,7 @@ import type { WordItem } from "../data/types";
 import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
 import { buildCloze } from "../data/cloze";
+import SpeakButton from "./SpeakButton";
 
 export default function Feedback({
   item,
@@ -51,11 +52,12 @@ export default function Feedback({
         {wasCorrect ? "Nice one!" : "Not this time — you'll see it again"}
       </div>
 
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-center gap-2">
         <h2 className="text-2xl font-semibold text-slate-900">
           {formatHeadword(item.word)}
         </h2>
         <span className="text-sm text-slate-400 italic">{item.pos}</span>
+        <SpeakButton text={item.word} label="Listen to the word" />
       </div>
 
       <section className="rounded-xl bg-[#fff1e8] px-4 py-3">
@@ -75,8 +77,11 @@ export default function Feedback({
       {/* This exact sentence comes back in the Win passage, so students are
           told to actually read it. */}
       <section className="rounded-xl bg-slate-100 px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-          Example <span className="text-[#e8722c]">· it'll be on your quiz</span>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-2">
+          <span>
+            Example <span className="text-[#e8722c]">· it'll be on your quiz</span>
+          </span>
+          <SpeakButton text={item.example} label="Listen to the example" size="sm" />
         </p>
         <p className="text-lg leading-relaxed text-[#14274d]">
           {cloze.segments.map((seg, i) =>

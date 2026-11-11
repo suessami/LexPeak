@@ -6,6 +6,7 @@ import { computeMinTimeMs } from "../data/timing";
 import { formatHeadword } from "../data/idiom";
 import TooFastModal from "./TooFastModal";
 import peakThink from "../assets/mascot/peak-think.webp";
+import SpeakButton from "./SpeakButton";
 
 /**
  * Warm-up card, "predict" variant (sample / not yet the default).
@@ -76,16 +77,18 @@ export default function WordCardPredict({
         </span>
       </div>
 
-      <div className="flex items-baseline gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         <h2 className="text-2xl font-bold text-[#e8722c]">
           {formatHeadword(item.word)}
         </h2>
         <span className="text-sm text-slate-400 italic">{item.pos}</span>
+        <SpeakButton text={item.word} label="Listen to the word" />
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1">
+        <p className="text-xs uppercase tracking-wide font-medium text-slate-400 mb-1 flex items-center gap-2">
           Example
+          <SpeakButton text={item.example} label="Listen to the example" size="sm" />
         </p>
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-base text-[#14274d] leading-relaxed">
           {cloze.segments.map((seg, i) =>

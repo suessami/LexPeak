@@ -32,6 +32,7 @@ import peakThink from "../assets/mascot/peak-think.webp";
 import peakOk from "../assets/mascot/peak-ok.webp";
 import stickerNiceWork from "../assets/mascot/sticker-nicework.webp";
 import stickerSmallSteps from "../assets/mascot/sticker-smallsteps.webp";
+import SpeakButton from "../components/SpeakButton";
 
 export type Stage =
   | "learn"
@@ -586,7 +587,10 @@ function WarmupSummary({
               <tr key={w.id} className="border-b border-slate-100 last:border-0">
                 <td className="py-2 pr-2 text-slate-400">{i + 1}</td>
                 <td className="py-2 pr-2 font-semibold text-[#14274d]">
-                  {formatHeadword(w.word)}
+                  <span className="inline-flex items-center gap-1.5">
+                    {formatHeadword(w.word)}
+                    <SpeakButton text={w.word} label="Listen to the word" size="sm" />
+                  </span>
                 </td>
                 <td className="py-2 pr-2 text-slate-600">{w.definitionEn}</td>
                 <td className="py-2 text-center font-bold">
@@ -657,8 +661,9 @@ function ResultCard({
           <ul className="flex flex-col gap-2">
             {missed.map((w) => (
               <li key={w.id} className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="flex items-baseline gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-[#14274d]">{formatHeadword(w.word)}</span>
+                  <SpeakButton text={w.word} label="Listen to the word" size="sm" />
                   <span className="text-sm text-slate-600">{w.meaningKo}</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">{w.definitionEn}</p>
